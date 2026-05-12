@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package sapp.media.v1;
+
+option java_package = "com.sapp.grpc.media.v1";
+option java_multiple_files = true;
+option java_outer_classname = "MediaServiceProto";
+
+import "google/protobuf/timestamp.proto";
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+enum MediaType {
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  MEDIA_TYPE_IMAGE = 1;
+  MEDIA_TYPE_VIDEO = 2;
+  MEDIA_TYPE_AUDIO = 3;
+  MEDIA_TYPE_FILE = 4;
+  MEDIA_TYPE_STICKER = 5;
+}
+
+enum MediaStatus {
+  MEDIA_STATUS_UNSPECIFIED = 0;
+  MEDIA_STATUS_PENDING = 1;
+  MEDIA_STATUS_PROCESSING = 2;
+  MEDIA_STATUS_READY = 3;
+  MEDIA_STATUS_FAILED = 4;
+}
+
+// ── Domain objects ────────────────────────────────────────────────────────────
+
+message MediaDto {
+  string media_id = 1;
+  MediaType type = 2;
+  MediaStatus status = 3;
+  string mime_type = 4;
+  int64 size_bytes = 5;
+  string url = 6;
+  string thumbnail_url = 7;
+  int32 width = 8;
+  int32 height = 9;
+  int32 duration_seconds = 10;
+  google.protobuf.Timestamp created_at = 11;
+}
+
+// ── RequestUploadUrl ──────────────────────────────────────────────────────────
+
+message RequestUploadUrlRequest {
+  MediaType type = 1;
+  string mime_type = 2;
+  int64 size_bytes = 3;
+  string file_name = 4;
+}
+
+message RequestUploadUrlResponse {
+  string media_id = 1;
+  string upload_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+// ── ConfirmUpload ─────────────────────────────────────────────────────────────
+
+message ConfirmUploadRequest {
+  string media_id = 1;
+}
+
+message ConfirmUploadResponse {
+  MediaDto media = 1;
+}
+
+// ── GetMedia ──────────────────────────────────────────────────────────────────
+
+message GetMediaRequest {
+  string media_id = 1;
+}
+
+message GetMediaResponse {
+  MediaDto media = 1;
+}
+
+// ── WatchProcessing (server-streaming) ────────────────────────────────────────
+
+message WatchProcessingRequest {
+  string media_id = 1;
+}
+
+message ProcessingStatusEvent {
+  string media_id = 1;
+  MediaStatus status = 2;
+  string error_message = 3;
+  MediaDto media = 4;
+}
+
+// ── MediaService ──────────────────────────────────────────────────────────────
+
+service MediaService {
+  rpc RequestUploadUrl(RequestUploadUrlRequest) returns (RequestUploadUrlResponse);
+  rpc ConfirmUpload(ConfirmUploadRequest) returns (ConfirmUploadResponse);
+  rpc GetMedia(GetMediaRequest) returns (GetMediaResponse);
+  rpc WatchProcessing(WatchProcessingRequest) returns (stream ProcessingStatusEvent);
+}

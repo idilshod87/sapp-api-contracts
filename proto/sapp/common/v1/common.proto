@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package sapp.common.v1;
+
+option java_package = "com.sapp.grpc.common.v1";
+option java_multiple_files = true;
+option java_outer_classname = "CommonProto";
+
+// Opaque pagination cursor for list requests.
+message PageCursor {
+  string value = 1;
+}
+
+// Pagination metadata attached to every list response.
+message PageInfo {
+  bool has_next_page = 1;
+  string next_cursor = 2;
+}

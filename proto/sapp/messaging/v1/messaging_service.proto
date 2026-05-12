@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package sapp.messaging.v1;
+
+option java_package = "com.sapp.grpc.messaging.v1";
+option java_multiple_files = true;
+option java_outer_classname = "MessagingServiceProto";
+
+import "google/protobuf/timestamp.proto";
+import "sapp/common/v1/common.proto";
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_TEXT = 1;
+  MESSAGE_TYPE_IMAGE = 2;
+  MESSAGE_TYPE_VIDEO = 3;
+  MESSAGE_TYPE_AUDIO = 4;
+  MESSAGE_TYPE_FILE = 5;
+  MESSAGE_TYPE_STICKER = 6;
+  MESSAGE_TYPE_SYSTEM = 7;
+}
+
+enum MessageStatus {
+  MESSAGE_STATUS_UNSPECIFIED = 0;
+  MESSAGE_STATUS_SENDING = 1;
+  MESSAGE_STATUS_SENT = 2;
+  MESSAGE_STATUS_DELIVERED = 3;
+  MESSAGE_STATUS_READ = 4;
+  MESSAGE_STATUS_FAILED = 5;
+}
+
+// ── Domain objects ────────────────────────────────────────────────────────────
+
+message MessageDto {
+  string message_id = 1;
+  string chat_id = 2;
+  string sender_id = 3;
+  MessageType type = 4;
+  string text = 5;
+  string media_id = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp edited_at = 8;
+  bool is_deleted = 9;
+  string reply_to_message_id = 10;
+  string client_message_id = 11;
+  int64 pts = 12;
+}
+
+message ChatDto {
+  string chat_id = 1;
+  string title = 2;
+  bool is_group = 3;
+  repeated string member_ids = 4;
+  string last_message_id = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// ── SendMessage ───────────────────────────────────────────────────────────────
+
+message SendMessageRequest {
+  string chat_id = 1;
+  MessageType type = 2;
+  string text = 3;
+  string media_id = 4;
+  string reply_to_message_id = 5;
+  string client_message_id = 6;
+}
+
+message SendMessageResponse {
+  MessageDto message = 1;
+}
+
+// ── GetHistory ────────────────────────────────────────────────────────────────
+
+message GetHistoryRequest {
+  string chat_id = 1;
+  int32 limit = 2;
+  string before_message_id = 3;
+}
+
+message GetHistoryResponse {
+  repeated MessageDto messages = 1;
+  sapp.common.v1.PageInfo page_info = 2;
+}
+
+// ── EditMessage ───────────────────────────────────────────────────────────────
+
+message EditMessageRequest {
+  string message_id = 1;
+  string text = 2;
+}
+
+message EditMessageResponse {
+  MessageDto message = 1;
+}
+
+// ── DeleteMessage ─────────────────────────────────────────────────────────────
+
+message DeleteMessageRequest {
+  string message_id = 1;
+  bool for_everyone = 2;
+}
+
+message DeleteMessageResponse {
+  bool success = 1;
+}
+
+// ── MarkRead ──────────────────────────────────────────────────────────────────
+
+message MarkReadRequest {
+  string chat_id = 1;
+  string up_to_message_id = 2;
+}
+
+message MarkReadResponse {
+  bool success = 1;
+}
+
+// ── GetChats ──────────────────────────────────────────────────────────────────
+
+message GetChatsRequest {
+  int32 limit = 1;
+  string cursor = 2;
+}
+
+message GetChatsResponse {
+  repeated ChatDto chats = 1;
+  sapp.common.v1.PageInfo page_info = 2;
+}
+
+// ── Sync (server-streaming) ───────────────────────────────────────────────────
+
+message SyncRequest {
+  int64 since_pts = 1;
+}
+
+message SyncEvent {
+  oneof event {
+    MessageDto new_message = 1;
+    MessageDto edited_message = 2;
+    DeletedMessageEvent deleted_message = 3;
+    ChatDto chat_updated = 4;
+    ReadReceiptEvent read_receipt = 5;
+  }
+  int64 pts = 6;
+}
+
+message DeletedMessageEvent {
+  string message_id = 1;
+  string chat_id = 2;
+  bool for_everyone = 3;
+}
+
+message ReadReceiptEvent {
+  string chat_id = 1;
+  string reader_id = 2;
+  string up_to_message_id = 3;
+  google.protobuf.Timestamp read_at = 4;
+}
+
+// ── MessagingService ──────────────────────────────────────────────────────────
+
+service MessagingService {
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+  rpc EditMessage(EditMessageRequest) returns (EditMessageResponse);
+  rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
+  rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
+  rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
+  rpc Sync(SyncRequest) returns (stream SyncEvent);
+}
