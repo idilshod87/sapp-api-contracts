@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package sapp.events.v1;
+
+option java_package = "com.sapp.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ReactionEventsProto";
+
+import "sapp/common/v1/common.proto";
+
+// ReactionAddedPayload — event_type = "reaction.added".
+message ReactionAddedPayload {
+  sapp.common.v1.Uuid message_id       = 1;
+  sapp.common.v1.Uuid chat_id          = 2;
+  sapp.common.v1.Uuid reactor_id       = 3;
+  string              emoji            = 4;
+  int64               added_at_unix_ms = 5;
+  reserved 6 to 19;
+}
+
+// ReactionRemovedPayload — event_type = "reaction.removed".
+message ReactionRemovedPayload {
+  sapp.common.v1.Uuid message_id         = 1;
+  sapp.common.v1.Uuid chat_id            = 2;
+  sapp.common.v1.Uuid reactor_id         = 3;
+  string              emoji              = 4;
+  int64               removed_at_unix_ms = 5;
+  reserved 6 to 19;
+}

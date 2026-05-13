@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package sapp.sync.v1;
+
+option java_package = "com.sapp.sync.v1";
+option java_multiple_files = true;
+option java_outer_classname = "WsMessagesProto";
+option go_package = "github.com/sapp/api-contracts/sync/v1;syncv1";
+
+// WsEvent — unified envelope for all server→client WebSocket frames (ADR-0029 §4).
+// Clients: parse event_type, then ParseFrom(payload) into the corresponding payload proto.
+message WsEvent {
+  string          event_type = 1;  // e.g. "message.new", "typing.started", "ws.error"
+  bytes           payload    = 2;  // serialised domain proto per event_type
+  optional int64  pts        = 3;  // monotonic per-user sequence; absent = ephemeral / error event
+  reserved 4 to 9;                 // future envelope-level metadata
+}
+
+// WsError payload — used when event_type = "ws.error".
+// Codes: "auth.expired", "rate.limited", "frame.too_large", "server.error"
+message WsError {
+  string code    = 1;  // machine-readable; client MUST NOT display raw
+  string message = 2;  // human-readable English
+  reserved 3 to 9;
+}

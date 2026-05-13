@@ -2,9 +2,10 @@ syntax = "proto3";
 
 package sapp.common.v1;
 
-option java_package = "com.sapp.grpc.common.v1";
+option java_package = "com.sapp.common.v1";
 option java_multiple_files = true;
 option java_outer_classname = "CommonProto";
+option go_package = "github.com/sapp/api-contracts/common/v1;commonv1";
 
 // Opaque pagination cursor for list requests.
 message PageCursor {
@@ -15,4 +16,15 @@ message PageCursor {
 message PageInfo {
   bool has_next_page = 1;
   string next_cursor = 2;
+}
+
+// UUIDv7 represented as 16 raw bytes (ADR-0032).
+// Wire format: bytes (preferred over string for size and parse cost).
+message Uuid {
+  bytes value = 1;
+}
+
+// Wall-clock timestamp (UTC) — ms since Unix epoch.
+message Timestamp {
+  int64 unix_ms = 1;
 }

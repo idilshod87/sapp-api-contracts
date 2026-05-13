@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package sapp.events.v1;
+
+option java_package = "com.sapp.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "MessageEventsProto";
+
+import "sapp/common/v1/common.proto";
+import "sapp/messaging/v1/message_content.proto";
+
+// MessageNewPayload — event_type = "message.new".
+// reply_to_message_id is carried in content.reply.reply_to_message_id (no duplicate field).
+message MessageNewPayload {
+  sapp.common.v1.Uuid              message_id      = 1;
+  sapp.common.v1.Uuid              chat_id         = 2;
+  sapp.common.v1.Uuid              sender_id       = 3;
+  int64                            sent_at_unix_ms = 4;
+  sapp.messaging.v1.MessageContent content         = 5;  // absent = Phase 1 limitation
+  optional int64                   unread_count    = 6;  // absent = unknown
+  optional bool                    unread_has_more = 7;
+  reserved 8 to 19;
+}
+
+// MessageEditedPayload — event_type = "message.edited".
+message MessageEditedPayload {
+  sapp.common.v1.Uuid              message_id        = 1;
+  sapp.common.v1.Uuid              chat_id           = 2;
+  sapp.common.v1.Uuid              editor_id         = 3;
+  sapp.messaging.v1.MessageContent new_content       = 4;
+  int64                            edited_at_unix_ms = 5;
+  reserved 6 to 19;
+}
+
+// MessageDeletedPayload — event_type = "message.deleted".
+// One frame per deleted message.
+message MessageDeletedPayload {
+  sapp.common.v1.Uuid message_id          = 1;
+  sapp.common.v1.Uuid chat_id             = 2;
+  sapp.common.v1.Uuid deleter_id          = 3;
+  int64               deleted_at_unix_ms  = 4;
+  bool                delete_for_everyone = 5;
+  reserved 6 to 19;
+}
+
+// MessageReadPayload — event_type = "message.read".
+// up_to_message_id: all messages up to and including this ID are marked read.
+message MessageReadPayload {
+  sapp.common.v1.Uuid chat_id           = 1;
+  sapp.common.v1.Uuid reader_id         = 2;
+  sapp.common.v1.Uuid up_to_message_id  = 3;
+  int64               read_at_unix_ms   = 4;
+  reserved 5 to 19;
+}

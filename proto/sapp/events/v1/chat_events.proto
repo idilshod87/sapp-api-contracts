@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package sapp.events.v1;
+
+option java_package = "com.sapp.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ChatEventsProto";
+
+import "sapp/common/v1/common.proto";
+
+enum ChatType {
+  CHAT_TYPE_UNSPECIFIED = 0;
+  CHAT_TYPE_DIRECT      = 1;
+  CHAT_TYPE_GROUP       = 2;
+  CHAT_TYPE_CHANNEL     = 3;
+}
+
+// ChatCreatedPayload — event_type = "chat.created".
+// title: absent for Direct; required for Group/Channel.
+message ChatCreatedPayload {
+  sapp.common.v1.Uuid           chat_id            = 1;
+  sapp.common.v1.Uuid           initiator_id       = 2;
+  ChatType                      chat_type          = 3;
+  repeated sapp.common.v1.Uuid member_ids          = 4;
+  int64                         created_at_unix_ms = 5;
+  optional string               title              = 6;
+  reserved 7 to 19;
+}

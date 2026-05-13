@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package sapp.messaging.v1;
+
+option java_package = "com.sapp.messaging.v1";
+option java_multiple_files = true;
+option java_outer_classname = "MessageContentProto";
+option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
+
+import "sapp/common/v1/common.proto";
+
+// MessageContent — typed discriminated union for all message body forms.
+// Nesting policy: ForwardedContent.inner_content MUST NOT contain another
+// ForwardedContent (max depth = 1). Server flattens nested forwards.
+message MessageContent {
+  oneof content {
+    TextContent      text      = 1;
+    MediaContent     media     = 2;
+    ForwardedContent forwarded = 3;
+    ReplyContent     reply     = 4;
+  }
+  reserved 5 to 19;
+}
+
+message TextContent {
+  string text = 1;
+  reserved 2 to 9;
+}
+
+message MediaContent {
+  sapp.common.v1.Uuid media_id  = 1;
+  string              mime_type = 2;
+  optional string     caption   = 3;
+  reserved 4 to 9;
+}
+
+message ForwardedContent {
+  sapp.common.v1.Uuid original_message_id = 1;
+  sapp.common.v1.Uuid original_chat_id    = 2;
+  sapp.common.v1.Uuid original_sender_id  = 3;
+  MessageContent      inner_content       = 4;  // MUST NOT itself contain ForwardedContent
+  reserved 5 to 9;
+}
+
+message ReplyContent {
+  sapp.common.v1.Uuid reply_to_message_id = 1;
+  MessageContent      inner_content       = 2;
+  reserved 3 to 9;
+}

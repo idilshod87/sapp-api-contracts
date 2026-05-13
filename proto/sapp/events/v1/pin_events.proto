@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package sapp.events.v1;
+
+option java_package = "com.sapp.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "PinEventsProto";
+
+import "sapp/common/v1/common.proto";
+
+// MessagePinnedPayload — event_type = "message.pinned".
+message MessagePinnedPayload {
+  sapp.common.v1.Uuid message_id        = 1;
+  sapp.common.v1.Uuid chat_id           = 2;
+  sapp.common.v1.Uuid pinner_id         = 3;
+  int64               pinned_at_unix_ms = 4;
+  reserved 5 to 19;
+}
+
+// MessageUnpinnedPayload — event_type = "message.unpinned".
+message MessageUnpinnedPayload {
+  sapp.common.v1.Uuid message_id          = 1;
+  sapp.common.v1.Uuid chat_id             = 2;
+  sapp.common.v1.Uuid unpinner_id         = 3;
+  int64               unpinned_at_unix_ms = 4;
+  reserved 5 to 19;
+}
