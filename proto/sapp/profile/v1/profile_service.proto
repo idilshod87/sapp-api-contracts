@@ -1,0 +1,35 @@
+syntax = "proto3";
+option csharp_namespace = "Sapp.Profile.Grpc";
+package sapp.profile.v1;
+
+service ProfileService {
+  rpc FindByPhone (FindByPhoneRequest) returns (FindByPhoneResponse);
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
+}
+
+message FindByPhoneRequest {
+  string phone = 1;
+}
+
+// Privacy: user field absent means not found OR AllowFindByPhone=false — intentionally indistinguishable
+message FindByPhoneResponse {
+  UserProfile user = 1;
+}
+
+message SearchUsersRequest {
+  string query      = 1;
+  int32  page_size  = 2;
+  string page_token = 3;
+}
+
+message SearchUsersResponse {
+  repeated UserProfile users           = 1;
+  string               next_page_token = 2;
+}
+
+message UserProfile {
+  string user_id      = 1;
+  string display_name = 2;
+  string username     = 3;  // empty string if not set
+  string avatar_url   = 4;  // empty string if no avatar
+}
