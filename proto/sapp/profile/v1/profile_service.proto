@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package sapp.profile.v1;
+
+option java_package = "com.sapp.grpc.profile.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ProfileServiceProto";
+
+// ── Domain objects ────────────────────────────────────────────────────────────
+
+message UserProfile {
+  string user_id   = 1;
+  string name      = 2;
+  string username  = 3;
+  string avatar_url = 4;
+  bool   is_online  = 5;
+  int64  last_seen_ms = 6;
+}
+
+// ── FindByPhone ───────────────────────────────────────────────────────────────
+
+message FindByPhoneRequest {
+  string phone = 1;
+}
+
+// user field absent = not found OR AllowFindByPhone=false (privacy-preserving)
+message FindByPhoneResponse {
+  UserProfile user = 1;
+}
+
+// ── SearchUsers ───────────────────────────────────────────────────────────────
+
+message SearchUsersRequest {
+  string query      = 1;
+  int32  page_size  = 2;
+  string page_token = 3;
+}
+
+message SearchUsersResponse {
+  repeated UserProfile users      = 1;
+  string               next_page_token = 2;
+}
+
+// ── ProfileService ────────────────────────────────────────────────────────────
+
+service ProfileService {
+  rpc FindByPhone(FindByPhoneRequest) returns (FindByPhoneResponse);
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+}
