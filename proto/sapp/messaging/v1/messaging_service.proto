@@ -7,7 +7,7 @@ option java_multiple_files = true;
 option java_outer_classname = "MessagingServiceProto";
 
 import "google/protobuf/timestamp.proto";
-import "sapp/common/v1/common.proto";
+import "sapp/common/v1/common.proto";  // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -76,8 +76,8 @@ message SendMessageResponse {
 // ── GetHistory ────────────────────────────────────────────────────────────────
 
 message GetHistoryRequest {
-  string chat_id = 1;
-  int32 limit = 2;
+  string chat_id           = 1;
+  int32  limit             = 2;   // adr-0042-ok: pre-existing exception; cleanup tracked post-task-049 (§Out of scope)
   string before_message_id = 3;
 }
 
@@ -121,14 +121,21 @@ message MarkReadResponse {
 
 // ── GetChats ──────────────────────────────────────────────────────────────────
 
+enum ChatFilter {
+  CHAT_FILTER_UNSPECIFIED = 0;   // default — treated as MAIN by server
+  CHAT_FILTER_MAIN        = 1;
+  CHAT_FILTER_ARCHIVE     = 2;
+}
+
 message GetChatsRequest {
-  int32 limit = 1;
-  string cursor = 2;
+  int32      page_size  = 1;   // safe rename: same field number, same wire type as former `limit`
+  string     page_token = 2;   // safe rename: same field number, same wire type as former `cursor`
+  ChatFilter filter     = 3;   // new field; proto3 default = CHAT_FILTER_UNSPECIFIED → backward-compatible
 }
 
 message GetChatsResponse {
-  repeated ChatDto chats = 1;
-  sapp.common.v1.PageInfo page_info = 2;
+  repeated ChatDto chats           = 1;
+  string           next_page_token = 2;   // intentional breaking change: PageInfo → string (pre-production, per task-049 pre-flight)
 }
 
 // ── Sync (server-streaming) ───────────────────────────────────────────────────
