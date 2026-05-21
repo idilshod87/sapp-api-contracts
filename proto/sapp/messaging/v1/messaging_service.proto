@@ -161,6 +161,17 @@ message ReadReceiptEvent {
   google.protobuf.Timestamp read_at = 4;
 }
 
+// ── CreateDirectChat ──────────────────────────────────────────────────────────
+
+message CreateDirectChatRequest {
+  string peer_user_id = 1;
+}
+
+message CreateDirectChatResponse {
+  string chat_id        = 1;
+  bool   already_existed = 2;
+}
+
 // ── MessagingService ──────────────────────────────────────────────────────────
 
 service MessagingService {
@@ -171,4 +182,5 @@ service MessagingService {
   rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
   rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
   rpc Sync(SyncRequest) returns (stream SyncEvent);
+  rpc CreateDirectChat(CreateDirectChatRequest) returns (CreateDirectChatResponse);
 }
