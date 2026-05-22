@@ -31,6 +31,35 @@ enum MessageStatus {
   MESSAGE_STATUS_FAILED = 5;
 }
 
+// task-050: chat type discriminator
+enum ChatType {
+  CHAT_TYPE_UNSPECIFIED = 0;
+  CHAT_TYPE_PRIVATE     = 1;
+  CHAT_TYPE_GROUP       = 2;
+  CHAT_TYPE_CHANNEL     = 3;
+}
+
+// task-050: Phase 1 — MAIN / ARCHIVE. Phase 2 — FOLDER + folder_id.
+enum ChatListType {
+  CHAT_LIST_TYPE_UNSPECIFIED = 0;
+  CHAT_LIST_TYPE_MAIN        = 1;
+  CHAT_LIST_TYPE_ARCHIVE     = 2;
+  CHAT_LIST_TYPE_FOLDER      = 3;
+}
+
+// task-050: client-side localization of last-message preview.
+// TEXT type → render text directly; other types → localize label (e.g. "📷 Фото").
+enum MessageContentType {
+  MESSAGE_CONTENT_TYPE_UNSPECIFIED = 0;
+  MESSAGE_CONTENT_TYPE_TEXT        = 1;
+  MESSAGE_CONTENT_TYPE_IMAGE       = 2;
+  MESSAGE_CONTENT_TYPE_VIDEO       = 3;
+  MESSAGE_CONTENT_TYPE_DOCUMENT    = 4;
+  MESSAGE_CONTENT_TYPE_VOICE       = 5;
+  MESSAGE_CONTENT_TYPE_STICKER     = 6;
+  reserved 7 to 19;
+}
+
 // ── Domain objects ────────────────────────────────────────────────────────────
 
 message MessageDto {
@@ -48,14 +77,38 @@ message MessageDto {
   int64 pts = 12;
 }
 
-message ChatDto {
-  string chat_id = 1;
-  string title = 2;
-  bool is_group = 3;
-  repeated string member_ids = 4;
-  string last_message_id = 5;
-  google.protobuf.Timestamp created_at = 6;
-  google.protobuf.Timestamp updated_at = 7;
+// task-050: sort-order per chat list.
+// order encoding: pinned = Int64.MaxValue - pin_rank; normal = last_message_at_unix_ms
+message ChatPosition {
+  ChatListType list_type = 1;
+  int32        folder_id = 2;   // only for CHAT_LIST_TYPE_FOLDER (Phase 2)
+  int64        order     = 3;
+  bool         is_pinned = 4;
+}
+
+// task-050: Phase 1 preview fields sufficient for ChatList without extra RPCs.
+// Fields 8-20 reserved for DirectChat extension (reply_to, media, reactions).
+message MessageProto {
+  string             message_id          = 1;
+  string             sender_id           = 2;
+  string             sender_display_name = 3;   // server-computed from user_profile_snapshots
+  string             text                = 4;
+  MessageContentType content_type        = 5;
+  int64              sent_at_unix_ms     = 6;
+  bool               is_outgoing         = 7;   // server-computed: sender_id == requesting_user_id
+  reserved 8 to 20;
+}
+
+// task-050: replaces old ChatDto in GetChatsResponse.
+message ChatListItemProto {
+  string       chat_id      = 1;
+  ChatType     chat_type    = 2;
+  string       title        = 3;   // for PRIVATE = peer display_name (server-computed)
+  string       avatar_url   = 4;   // CDN URL; empty string if no avatar
+  MessageProto last_message = 5;   // absent for new chat with no messages
+  int32                 unread_count = 6;
+  repeated ChatPosition positions    = 7;   // Phase 1: 1 element
+  bool                  is_muted     = 8;
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
@@ -134,8 +187,8 @@ message GetChatsRequest {
 }
 
 message GetChatsResponse {
-  repeated ChatDto chats           = 1;
-  string           next_page_token = 2;   // intentional breaking change: PageInfo → string (pre-production, per task-049 pre-flight)
+  repeated ChatListItemProto chats = 1;   // task-050: ChatDto → ChatListItemProto (pre-production breaking change)
+  string             next_page_token = 2;
 }
 
 // ── Sync (server-streaming) ───────────────────────────────────────────────────
@@ -146,11 +199,11 @@ message SyncRequest {
 
 message SyncEvent {
   oneof event {
-    MessageDto new_message = 1;
-    MessageDto edited_message = 2;
+    MessageDto       new_message      = 1;
+    MessageDto       edited_message   = 2;
     DeletedMessageEvent deleted_message = 3;
-    ChatDto chat_updated = 4;
-    ReadReceiptEvent read_receipt = 5;
+    ChatListItemProto   chat_updated  = 4;   // task-050: ChatDto replaced with ChatListItemProto
+    ReadReceiptEvent  read_receipt    = 5;
   }
   int64 pts = 6;
 }
@@ -179,6 +232,48 @@ message CreateDirectChatResponse {
   bool   already_existed = 2;
 }
 
+// ── GetChat ───────────────────────────────────────────────────────────────────
+
+// task-051: full chat metadata for the chat detail screen.
+// Fields 7, 10, 12, 16 reserved — see comments.
+message ChatDetailProto {
+  string       chat_id                    = 1;
+  ChatType     chat_type                  = 2;
+  string       title                      = 3;   // PRIVATE: peer display_name; fallback "Unknown"
+  string       avatar_url                 = 4;   // CDN URL; empty for GROUP/CHANNEL Phase 1
+  string       description                = 5;   // empty for Phase 1 (no DB column yet)
+  int32        member_count               = 6;   // GROUP/CHANNEL only; 0 for DM
+  reserved     7;                                // was unread_count — client reads from ChatListItemProto
+  string       last_read_inbox_message_id = 8;   // scroll-to-unread anchor; empty = no read state yet
+  bool         can_send_messages          = 9;   // Phase 1: true for active members (left_at IS NULL)
+  reserved     10;                               // was is_pinned — client reads positions[0].is_pinned
+  bool         is_muted                   = 11;  // notification suppression; from chat_members.is_muted
+  reserved     12;                               // was is_archived — client reads positions[i].list_type
+  string       peer_user_id               = 13;  // PRIVATE only; empty for GROUP/CHANNEL
+  string       draft_text                 = 14;  // empty = no draft
+  string       draft_reply_to_message_id  = 15;  // empty = top-level draft
+  reserved     16;                               // was last_message — client calls GetHistory
+  // Phase 1: 1 element (MAIN or ARCHIVE).
+  // NOTE for mobile: positions[0].order is always 0 in GetChatResponse — do NOT use it to update
+  // ChatList sort-order cache (authoritative only from GetChatsResponse).
+  repeated ChatPosition positions         = 17;
+}
+
+message GetChatRequest {
+  string chat_id = 1;
+}
+
+message GetChatResponse {
+  ChatDetailProto chat = 1;
+}
+
+// task-051: no-op lifecycle RPCs (Phase 1 stubs; business logic deferred to task-052)
+message OpenChatRequest  { string chat_id = 1; }
+message OpenChatResponse {}
+
+message CloseChatRequest  { string chat_id = 1; }
+message CloseChatResponse {}
+
 // ── MessagingService ──────────────────────────────────────────────────────────
 
 service MessagingService {
@@ -190,4 +285,7 @@ service MessagingService {
   rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
   rpc Sync(SyncRequest) returns (stream SyncEvent);
   rpc CreateDirectChat(CreateDirectChatRequest) returns (CreateDirectChatResponse);
+  rpc GetChat(GetChatRequest)     returns (GetChatResponse);
+  rpc OpenChat(OpenChatRequest)   returns (OpenChatResponse);
+  rpc CloseChat(CloseChatRequest) returns (CloseChatResponse);
 }
