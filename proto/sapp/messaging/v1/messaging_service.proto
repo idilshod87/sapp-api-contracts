@@ -267,12 +267,47 @@ message GetChatResponse {
   ChatDetailProto chat = 1;
 }
 
-// task-051: no-op lifecycle RPCs (Phase 1 stubs; business logic deferred to task-052)
+// task-051: lifecycle RPCs (Phase 1 stubs promoted to real handlers in task-052)
 message OpenChatRequest  { string chat_id = 1; }
 message OpenChatResponse {}
 
 message CloseChatRequest  { string chat_id = 1; }
 message CloseChatResponse {}
+
+// ── task-052: Chat Action RPCs ────────────────────────────────────────────────
+
+message PinChatRequest   { string chat_id = 1; }
+message PinChatResponse  {}
+
+message UnpinChatRequest  { string chat_id = 1; }
+message UnpinChatResponse {}
+
+message ArchiveChatRequest  { string chat_id = 1; }
+message ArchiveChatResponse {}
+
+message UnarchiveChatRequest  { string chat_id = 1; }
+message UnarchiveChatResponse {}
+
+message MuteChatRequest   { string chat_id = 1; }  // Phase 1: permanent mute
+message MuteChatResponse  {}
+
+message UnmuteChatRequest  { string chat_id = 1; }
+message UnmuteChatResponse {}
+
+message SetDraftRequest  {
+  string chat_id    = 1;
+  string draft_text = 2;  // max 4096 chars (application-layer validation)
+}
+message SetDraftResponse {}
+
+message ClearDraftRequest  { string chat_id = 1; }
+message ClearDraftResponse {}
+
+message DeletePrivateChatRequest  { string chat_id = 1; }
+message DeletePrivateChatResponse {}
+
+message ClearPrivateChatHistoryRequest  { string chat_id = 1; }
+message ClearPrivateChatHistoryResponse {}
 
 // ── MessagingService ──────────────────────────────────────────────────────────
 
@@ -285,7 +320,18 @@ service MessagingService {
   rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
   rpc Sync(SyncRequest) returns (stream SyncEvent);
   rpc CreateDirectChat(CreateDirectChatRequest) returns (CreateDirectChatResponse);
-  rpc GetChat(GetChatRequest)     returns (GetChatResponse);
-  rpc OpenChat(OpenChatRequest)   returns (OpenChatResponse);
-  rpc CloseChat(CloseChatRequest) returns (CloseChatResponse);
+  rpc GetChat(GetChatRequest)         returns (GetChatResponse);
+  rpc OpenChat(OpenChatRequest)       returns (OpenChatResponse);
+  rpc CloseChat(CloseChatRequest)     returns (CloseChatResponse);
+  // task-052: Chat action RPCs
+  rpc PinChat(PinChatRequest)         returns (PinChatResponse);
+  rpc UnpinChat(UnpinChatRequest)     returns (UnpinChatResponse);
+  rpc ArchiveChat(ArchiveChatRequest) returns (ArchiveChatResponse);
+  rpc UnarchiveChat(UnarchiveChatRequest) returns (UnarchiveChatResponse);
+  rpc MuteChat(MuteChatRequest)       returns (MuteChatResponse);
+  rpc UnmuteChat(UnmuteChatRequest)   returns (UnmuteChatResponse);
+  rpc SetDraft(SetDraftRequest)       returns (SetDraftResponse);
+  rpc ClearDraft(ClearDraftRequest)   returns (ClearDraftResponse);
+  rpc DeletePrivateChat(DeletePrivateChatRequest)           returns (DeletePrivateChatResponse);
+  rpc ClearPrivateChatHistory(ClearPrivateChatHistoryRequest) returns (ClearPrivateChatHistoryResponse);
 }
