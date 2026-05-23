@@ -114,29 +114,47 @@ message ChatListItemProto {
 // ── SendMessage ───────────────────────────────────────────────────────────────
 
 message SendMessageRequest {
-  string chat_id = 1;
-  MessageType type = 2;
-  string text = 3;
-  string media_id = 4;
+  string chat_id             = 1;
+  string client_message_id   = 2;
+  string text                = 3;
+  // field 4 reserved for entities (repeated TextEntityProto)
   string reply_to_message_id = 5;
-  string client_message_id = 6;
+  // field 6 reserved for quoted_text
+  // field 7 reserved
+  string media_id            = 8;
 }
 
 message SendMessageResponse {
-  MessageDto message = 1;
+  string message_id      = 1;
+  bool   replayed        = 2;
+  int64  sent_at_unix_ms = 3;
 }
 
-// ── GetHistory ────────────────────────────────────────────────────────────────
+// ── GetChatHistory ────────────────────────────────────────────────────────────
 
-message GetHistoryRequest {
+message GetChatHistoryRequest {
   string chat_id           = 1;
-  int32  limit             = 2;   // adr-0042-ok: pre-existing exception; cleanup tracked post-task-049 (§Out of scope)
-  string before_message_id = 3;
+  string before_message_id = 2;
+  int32  limit             = 3;
 }
 
-message GetHistoryResponse {
-  repeated MessageDto messages = 1;
-  sapp.common.v1.PageInfo page_info = 2;
+message ChatMessageProto {
+  string message_id          = 1;
+  string chat_id             = 2;
+  string sender_id           = 3;
+  int64  sent_at_unix_ms     = 4;
+  string text                = 5;
+  // field 6 reserved for entities
+  string reply_to_message_id = 7;
+  // field 8 reserved for quoted_text
+  int64  edited_at_unix_ms   = 9;
+  // field 10 reserved for deleted_at_unix_ms
+  bool   is_deleted          = 11;
+}
+
+message GetChatHistoryResponse {
+  repeated ChatMessageProto messages = 1;
+  bool                      has_more = 2;
 }
 
 // ── EditMessage ───────────────────────────────────────────────────────────────
@@ -313,7 +331,7 @@ message ClearPrivateChatHistoryResponse {}
 
 service MessagingService {
   rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
-  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+  rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryResponse);
   rpc EditMessage(EditMessageRequest) returns (EditMessageResponse);
   rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
   rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
