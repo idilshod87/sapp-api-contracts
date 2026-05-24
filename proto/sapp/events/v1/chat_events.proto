@@ -26,3 +26,14 @@ message ChatCreatedPayload {
   optional string               title              = 6;
   reserved 7 to 19;
 }
+
+// task-052: event_type = "chat.deleted" — delivered to all DM participants.
+message ChatDeletedPayload {
+  string chat_id = 1;
+}
+
+// task-052: event_type = "chat.history_cleared" — delivered to all DM participants.
+message ChatHistoryClearedPayload {
+  string chat_id            = 1;
+  int64  cleared_at_unix_ms = 2;
+}
