@@ -186,8 +186,9 @@ message MarkReadRequest {
   string up_to_message_id = 2;
 }
 
+// task-053: additive change — proto3 clients ignoring unknown fields continue to work.
 message MarkReadResponse {
-  bool success = 1;
+  int32 unread_count = 1;  // exact count after MarkRead; 0 = all read
 }
 
 // ── GetChats ──────────────────────────────────────────────────────────────────
@@ -321,10 +322,16 @@ message SetDraftResponse {}
 message ClearDraftRequest  { string chat_id = 1; }
 message ClearDraftResponse {}
 
-message DeletePrivateChatRequest  { string chat_id = 1; }
+message DeletePrivateChatRequest {
+  string chat_id  = 1;
+  bool   for_both = 2;
+}
 message DeletePrivateChatResponse {}
 
-message ClearPrivateChatHistoryRequest  { string chat_id = 1; }
+message ClearPrivateChatHistoryRequest {
+  string chat_id     = 1;
+  bool   for_me_only = 2;
+}
 message ClearPrivateChatHistoryResponse {}
 
 // ── MessagingService ──────────────────────────────────────────────────────────

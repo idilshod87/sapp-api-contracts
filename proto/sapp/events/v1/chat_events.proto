@@ -37,3 +37,12 @@ message ChatHistoryClearedPayload {
   string chat_id            = 1;
   int64  cleared_at_unix_ms = 2;
 }
+
+// task-053: event_type = "chat.read" — delivered to the user's own ws:user:{userId} channel.
+// Enables multi-device sync: Device B updates local unread_count + last_read_inbox_message_id.
+// RequiresPts=false (ephemeral counter update).
+message ChatReadPayload {
+  string chat_id              = 1;  // UUID string
+  int32  unread_count         = 2;  // current count for the user; 0 = all read
+  string last_read_message_id = 3;  // UUIDv7 string — Device B updates local Room last_read
+}
