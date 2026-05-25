@@ -46,3 +46,13 @@ message ChatReadPayload {
   int32  unread_count         = 2;  // current count for the user; 0 = all read
   string last_read_message_id = 3;  // UUIDv7 string — Device B updates local Room last_read
 }
+
+// task-054 / ADR-0045: event_type = "chat.read_outbox" — delivered to the *sender* of read messages.
+// Enables double-checkmark: User A sees ✓✓ when User B reads A's messages.
+// RequiresPts=true (gap-detection needed for reliable delivery to the recipient).
+// Routed via WsEventEnvelope.target_user_id to ws:user:{read_by_user_id's peer}.
+message ChatReadOutboxPayload {
+  string chat_id              = 1;  // UUID string — the chat where MarkRead was called
+  string read_by_user_id      = 2;  // UUID string — user who called MarkRead (initiator)
+  string last_read_message_id = 3;  // UUIDv7 string — highest message ID that was read
+}
