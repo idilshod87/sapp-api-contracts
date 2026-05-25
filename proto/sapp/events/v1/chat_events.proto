@@ -38,13 +38,31 @@ message ChatHistoryClearedPayload {
   int64  cleared_at_unix_ms = 2;
 }
 
-// task-053: event_type = "chat.read" — delivered to the user's own ws:user:{userId} channel.
+// task-053/task-055: event_type = "chat.read_inbox" — delivered to the user's own ws:user:{userId} channel.
 // Enables multi-device sync: Device B updates local unread_count + last_read_inbox_message_id.
-// RequiresPts=false (ephemeral counter update).
+// RequiresPts=true (ADR-0044: ordered delivery for gap detection).
+// Field 3 renamed from last_read_message_id → last_read_inbox_message_id (wire-compatible; same field number).
 message ChatReadPayload {
-  string chat_id              = 1;  // UUID string
-  int32  unread_count         = 2;  // current count for the user; 0 = all read
-  string last_read_message_id = 3;  // UUIDv7 string — Device B updates local Room last_read
+  string chat_id                    = 1;  // UUID string
+  int32  unread_count               = 2;  // current count for the user; 0 = all read
+  string last_read_inbox_message_id = 3;  // UUIDv7 string — Device B updates local Room last_read
+}
+
+// task-055 / ADR-0044: event_type = "chat.mention_read" — delivered to the user's own ws:user:{userId} channel.
+// Signals that the user read an @mention in a specific chat; secondary devices clear the mention badge.
+// RequiresPts=true (gap detection needed for reliable multi-device sync).
+message ChatMentionReadPayload {
+  string chat_id    = 1;  // UUID string — chat where the mention was read
+  string message_id = 2;  // UUIDv7 string — mentioned message
+}
+
+// task-055 / ADR-0044: event_type = "chat.marked_unread" — delivered to the user's own ws:user:{userId} channel.
+// Signals that the user toggled the "marked as unread" flag for a chat.
+// RequiresPts=true (gap detection for reliable multi-device sync).
+// NOTE: server does NOT persist this state — client-side only (ADR-0044 §Phase 1 limitation).
+message ChatMarkedUnreadPayload {
+  string chat_id          = 1;  // UUID string
+  bool   is_marked_unread = 2;  // true = marked, false = unmarked
 }
 
 // task-054 / ADR-0045: event_type = "chat.read_outbox" — delivered to the *sender* of read messages.

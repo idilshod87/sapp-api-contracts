@@ -334,6 +334,26 @@ message ClearPrivateChatHistoryRequest {
 }
 message ClearPrivateChatHistoryResponse {}
 
+// ── task-055 / ADR-0044: Unread tracking amendments ──────────────────────────
+
+// ReadMention: explicit acknowledgement that the user viewed an @mention.
+// Server resets unread_mentions_count and emits chat.mention_read WS event.
+// No-op if unread_mentions_count == 0 (not an error).
+message ReadMentionRequest  {
+  string chat_id    = 1;  // chat where the mention is
+  string message_id = 2;  // message_id that contains the mention (UUIDv7)
+}
+message ReadMentionResponse {}
+
+// MarkChatAsUnread: toggle the "manually marked as unread" flag for a chat.
+// Server emits chat.marked_unread WS event for multi-device sync.
+// State is NOT persisted server-side — client-only (ADR-0044 §Phase 1).
+message MarkChatAsUnreadRequest  {
+  string chat_id         = 1;
+  bool   is_marked_unread = 2;  // true = mark, false = clear
+}
+message MarkChatAsUnreadResponse {}
+
 // ── MessagingService ──────────────────────────────────────────────────────────
 
 service MessagingService {
@@ -359,4 +379,7 @@ service MessagingService {
   rpc ClearDraft(ClearDraftRequest)   returns (ClearDraftResponse);
   rpc DeletePrivateChat(DeletePrivateChatRequest)           returns (DeletePrivateChatResponse);
   rpc ClearPrivateChatHistory(ClearPrivateChatHistoryRequest) returns (ClearPrivateChatHistoryResponse);
+  // task-055 / ADR-0044: unread tracking amendments
+  rpc ReadMention(ReadMentionRequest)             returns (ReadMentionResponse);
+  rpc MarkChatAsUnread(MarkChatAsUnreadRequest)   returns (MarkChatAsUnreadResponse);
 }
