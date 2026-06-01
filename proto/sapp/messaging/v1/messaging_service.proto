@@ -111,6 +111,29 @@ message ChatListItemProto {
   bool                  is_muted     = 8;
 }
 
+// ── ClientMedia types (task-058) ─────────────────────────────────────────────
+// Local enum — avoids import dependency on media_service.proto (ADR-0008 bounded context isolation).
+// Presentation layer maps ClientMediaType → domain MediaType.
+
+enum ClientMediaType {
+  CLIENT_MEDIA_TYPE_UNSPECIFIED = 0;
+  CLIENT_MEDIA_TYPE_IMAGE       = 1;
+  CLIENT_MEDIA_TYPE_VIDEO       = 2;
+  CLIENT_MEDIA_TYPE_AUDIO       = 3;
+  CLIENT_MEDIA_TYPE_DOCUMENT    = 4;
+}
+
+// Snapshot supplied by the client at send time (from ConfirmUpload / GetMediaInfo response).
+// Required when media_id is present — server uses it to build MediaAttachment without
+// fetching metadata over gRPC (replaced by IsReadyForAttachment lightweight boolean check).
+message ClientMediaSnapshot {
+  ClientMediaType type             = 1;
+  int64           size_bytes       = 2;
+  string          content_type     = 3;
+  string          checksum_sha256  = 4;
+  int32           snapshot_version = 5;
+}
+
 // ── SendMessage ───────────────────────────────────────────────────────────────
 
 message SendMessageRequest {
@@ -121,7 +144,8 @@ message SendMessageRequest {
   string reply_to_message_id = 5;
   // field 6 reserved for quoted_text
   // field 7 reserved
-  string media_id            = 8;
+  string              media_id        = 8;
+  ClientMediaSnapshot media_snapshot  = 9;  // task-058: required when media_id present (field 8 was taken; using 9)
 }
 
 message SendMessageResponse {
@@ -157,15 +181,20 @@ message GetChatHistoryResponse {
   bool                      has_more = 2;
 }
 
-// ── EditMessage ───────────────────────────────────────────────────────────────
+// ── EditMessageText ──────────────────────────────────────────────────────────
 
-message EditMessageRequest {
-  string message_id = 1;
-  string text = 2;
+message EditMessageTextRequest {
+  string chat_id    = 1;
+  string message_id = 2;
+  string text       = 3;
+  // field 4 reserved for entities (repeated TextEntityProto)
+  // field 5 reserved for quoted_text
 }
 
-message EditMessageResponse {
-  MessageDto message = 1;
+message EditMessageTextResponse {
+  string message_id        = 1;
+  int64  edited_at_unix_ms = 2;
+  bool   updated           = 3;
 }
 
 // ── DeleteMessage ─────────────────────────────────────────────────────────────
@@ -359,7 +388,7 @@ message MarkChatAsUnreadResponse {}
 service MessagingService {
   rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
   rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryResponse);
-  rpc EditMessage(EditMessageRequest) returns (EditMessageResponse);
+  rpc EditMessageText(EditMessageTextRequest) returns (EditMessageTextResponse);
   rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
   rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
   rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
