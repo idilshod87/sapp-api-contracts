@@ -8,6 +8,8 @@ option java_outer_classname = "MessagingServiceProto";
 
 import "google/protobuf/timestamp.proto";
 import "sapp/common/v1/common.proto";  // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
+import "sapp/messaging/v1/message_content.proto";
+import "sapp/messaging/v1/message_proto.proto";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -87,8 +89,10 @@ message ChatPosition {
 }
 
 // task-050: Phase 1 preview fields sufficient for ChatList without extra RPCs.
+// task-067: renamed from MessageProto → MessagePreviewProto to free up the name
+//           for the canonical full message type in message_proto.proto.
 // Fields 8-20 reserved for DirectChat extension (reply_to, media, reactions).
-message MessageProto {
+message MessagePreviewProto {
   string             message_id          = 1;
   string             sender_id           = 2;
   string             sender_display_name = 3;   // server-computed from user_profile_snapshots
@@ -101,51 +105,26 @@ message MessageProto {
 
 // task-050: replaces old ChatDto in GetChatsResponse.
 message ChatListItemProto {
-  string       chat_id      = 1;
-  ChatType     chat_type    = 2;
-  string       title        = 3;   // for PRIVATE = peer display_name (server-computed)
-  string       avatar_url   = 4;   // CDN URL; empty string if no avatar
-  MessageProto last_message = 5;   // absent for new chat with no messages
+  string              chat_id      = 1;
+  ChatType            chat_type    = 2;
+  string              title        = 3;   // for PRIVATE = peer display_name (server-computed)
+  string              avatar_url   = 4;   // CDN URL; empty string if no avatar
+  MessagePreviewProto last_message = 5;   // absent for new chat with no messages
   int32                 unread_count = 6;
   repeated ChatPosition positions    = 7;   // Phase 1: 1 element
   bool                  is_muted     = 8;
 }
 
-// ── ClientMedia types (task-058) ─────────────────────────────────────────────
-// Local enum — avoids import dependency on media_service.proto (ADR-0008 bounded context isolation).
-// Presentation layer maps ClientMediaType → domain MediaType.
-
-enum ClientMediaType {
-  CLIENT_MEDIA_TYPE_UNSPECIFIED = 0;
-  CLIENT_MEDIA_TYPE_IMAGE       = 1;
-  CLIENT_MEDIA_TYPE_VIDEO       = 2;
-  CLIENT_MEDIA_TYPE_AUDIO       = 3;
-  CLIENT_MEDIA_TYPE_DOCUMENT    = 4;
-}
-
-// Snapshot supplied by the client at send time (from ConfirmUpload / GetMediaInfo response).
-// Required when media_id is present — server uses it to build MediaAttachment without
-// fetching metadata over gRPC (replaced by IsReadyForAttachment lightweight boolean check).
-message ClientMediaSnapshot {
-  ClientMediaType type             = 1;
-  int64           size_bytes       = 2;
-  string          content_type     = 3;
-  string          checksum_sha256  = 4;
-  int32           snapshot_version = 5;
-}
-
 // ── SendMessage ───────────────────────────────────────────────────────────────
+// task-067 / ADR-0049: SendMessageRequest now uses typed MessageContent oneof.
+// Flat fields (text, media_id, ClientMediaSnapshot, reply_to_message_id) removed.
 
 message SendMessageRequest {
-  string chat_id             = 1;
-  string client_message_id   = 2;
-  string text                = 3;
-  // field 4 reserved for entities (repeated TextEntityProto)
-  string reply_to_message_id = 5;
-  // field 6 reserved for quoted_text
-  // field 7 reserved
-  string              media_id        = 8;
-  ClientMediaSnapshot media_snapshot  = 9;  // task-058: required when media_id present (field 8 was taken; using 9)
+  string                                chat_id          = 1;
+  string                                client_message_id = 2;
+  sapp.messaging.v1.MessageContent      content          = 3;
+  optional sapp.messaging.v1.ReplyTo    reply_to         = 4;
+  reserved 5, 6, 8, 9;  // were: reply_to_message_id, quoted_text, media_id, media_snapshot
 }
 
 message SendMessageResponse {
@@ -162,23 +141,10 @@ message GetChatHistoryRequest {
   int32  limit             = 3;
 }
 
-message ChatMessageProto {
-  string message_id          = 1;
-  string chat_id             = 2;
-  string sender_id           = 3;
-  int64  sent_at_unix_ms     = 4;
-  string text                = 5;
-  // field 6 reserved for entities
-  string reply_to_message_id = 7;
-  // field 8 reserved for quoted_text
-  int64  edited_at_unix_ms   = 9;
-  // field 10 reserved for deleted_at_unix_ms
-  bool   is_deleted          = 11;
-}
-
+// task-067: GetChatHistory now returns canonical MessageProto (ADR-0049).
 message GetChatHistoryResponse {
-  repeated ChatMessageProto messages = 1;
-  bool                      has_more = 2;
+  repeated sapp.messaging.v1.MessageProto messages = 1;
+  bool                                    has_more = 2;
 }
 
 // ── EditMessageText ──────────────────────────────────────────────────────────

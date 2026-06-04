@@ -74,3 +74,27 @@ message ChatReadOutboxPayload {
   string read_by_user_id      = 2;  // UUID string — user who called MarkRead (initiator)
   string last_read_message_id = 3;  // UUIDv7 string — highest message ID that was read
 }
+
+// task-062: event_type = "chat.updated" — delivered to all group members when group settings change.
+// RequiresPts=false: settings changes are not ordered/gap-detected; last-write-wins on the client.
+// Only the changed field(s) are set; absent fields = not changed in this event.
+message ChatUpdatedPayload {
+  string chat_id        = 1;  // UUID string
+  optional string  name               = 2;
+  optional string  description        = 3;
+  optional string  username           = 4;  // empty = username removed
+  optional bool    is_public          = 5;
+  optional int32   slow_mode_delay    = 6;
+  optional bool    history_visible    = 7;
+  optional bool    members_hidden     = 8;
+  optional GroupPermissionsPayload default_permissions = 9;
+  reserved 10 to 19;
+}
+
+// Embedded within ChatUpdatedPayload when group default member permissions change.
+message GroupPermissionsPayload {
+  bool can_send_messages = 1;
+  bool can_send_media    = 2;
+  bool can_add_members   = 3;
+  bool can_pin_messages  = 4;
+}

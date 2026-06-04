@@ -9,41 +9,93 @@ option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 
 import "sapp/common/v1/common.proto";
 
-// MessageContent — typed discriminated union for all message body forms.
-// Nesting policy: ForwardedContent.inner_content MUST NOT contain another
-// ForwardedContent (max depth = 1). Server flattens nested forwards.
+// MessageContent — typed discriminated union per ADR-0049.
+// ForwardFrom and ReplyTo are NOT content types — they are carried as separate fields
+// on Message aggregate / MessageProto / WS event payloads.
 message MessageContent {
   oneof content {
-    TextContent      text      = 1;
-    MediaContent     media     = 2;
-    ForwardedContent forwarded = 3;
-    ReplyContent     reply     = 4;
+    TextContent      text       = 1;
+    PhotoContent     photo      = 2;
+    // 3 reserved (was ForwardedContent — removed ADR-0049)
+    // 4 reserved (was ReplyContent — removed ADR-0049)
+    VideoContent     video      = 5;
+    VoiceNoteContent voice_note = 6;
+    DocumentContent  document   = 7;
+    AudioContent     audio      = 8;
+    // StickerContent  sticker   = 9;  // Phase 3 — next available
+    // PollContent     poll      = 10; // Phase 3
   }
-  reserved 5 to 19;
+  reserved 3, 4;
+  reserved 11 to 19;
 }
 
 message TextContent {
   string text = 1;
+  // entities = 2; // Phase 2: repeated TextEntityProto entities
   reserved 2 to 9;
 }
 
-message MediaContent {
-  sapp.common.v1.Uuid media_id  = 1;
-  string              mime_type = 2;
-  optional string     caption   = 3;
-  reserved 4 to 9;
+message PhotoContent {
+  sapp.common.v1.Uuid media_id    = 1;
+  int32               width       = 2;
+  int32               height      = 3;
+  int64               size_bytes  = 4;
+  optional string     caption     = 5;
+  reserved 6 to 9;
 }
 
-message ForwardedContent {
-  sapp.common.v1.Uuid original_message_id = 1;
-  sapp.common.v1.Uuid original_chat_id    = 2;
-  sapp.common.v1.Uuid original_sender_id  = 3;
-  MessageContent      inner_content       = 4;  // MUST NOT itself contain ForwardedContent
+message VideoContent {
+  sapp.common.v1.Uuid media_id         = 1;
+  int32               width            = 2;
+  int32               height           = 3;
+  int32               duration_seconds = 4;
+  int64               size_bytes       = 5;
+  optional string     caption          = 6;
+  string              mime_type        = 7;
+  reserved 8 to 9;
+}
+
+message VoiceNoteContent {
+  sapp.common.v1.Uuid media_id         = 1;
+  int32               duration_seconds = 2;
+  bytes               waveform         = 3;
+  int64               size_bytes       = 4;
   reserved 5 to 9;
 }
 
-message ReplyContent {
-  sapp.common.v1.Uuid reply_to_message_id = 1;
-  MessageContent      inner_content       = 2;
+message DocumentContent {
+  sapp.common.v1.Uuid media_id   = 1;
+  string              file_name  = 2;
+  string              mime_type  = 3;
+  int64               size_bytes = 4;
+  optional string     caption    = 5;
+  reserved 6 to 9;
+}
+
+message AudioContent {
+  sapp.common.v1.Uuid media_id         = 1;
+  int32               duration_seconds = 2;
+  int64               size_bytes       = 3;
+  optional string     title            = 4;
+  optional string     performer        = 5;
+  string              mime_type        = 6;
+  reserved 7 to 9;
+}
+
+// ForwardFrom — context field on Message; NOT a content type.
+message ForwardFrom {
+  sapp.common.v1.Uuid          original_message_id  = 1;
+  sapp.common.v1.Uuid          original_chat_id     = 2;
+  optional sapp.common.v1.Uuid original_sender_id   = 3;  // absent = anonymous forward
+  int64                        forwarded_at_unix_ms  = 4;
+  reserved 5 to 9;
+}
+
+// ReplyTo — context field on Message; NOT a content type.
+message ReplyTo {
+  sapp.common.v1.Uuid                       message_id = 1;
+  sapp.common.v1.Uuid                       sender_id  = 2;
+  // content = 3;  // Phase 2: optional MessageContent content (cross-chat snapshot)
+  // quote   = 4;  // Phase 2: optional string quote (fragment citation)
   reserved 3 to 9;
 }
