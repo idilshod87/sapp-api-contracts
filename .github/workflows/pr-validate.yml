@@ -11,15 +11,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # lint: false — matches publish.yml (publish does NOT lint). buf DEFAULT lint surfaces
-      # large pre-existing debt (ENUM_VALUE_PREFIX on *Proto enums, PACKAGE_SAME_GO_PACKAGE,
-      # RPC_RESPONSE_STANDARD_NAME) unrelated to task-069 — tracked as a separate cleanup.
+      # lint: false — matches publish.yml. buf DEFAULT lint surfaces large pre-existing debt
+      #   (ENUM_VALUE_PREFIX on *Proto enums, PACKAGE_SAME_GO_PACKAGE, RPC_RESPONSE_STANDARD_NAME)
+      #   unrelated to task-069 — tracked as a separate cleanup.
+      # breaking: false — task-069/ADR-0051 is a sanctioned, fully wire-incompatible release
+      #   (namespace normalization touches every proto). FOLLOW-UP: re-enable breaking once
+      #   main is re-baselined on v1.0.12 (then it compares future PRs against the new baseline).
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
           lint: false
-          breaking: true
-          breaking_against: '.git#branch=origin/main'
+          breaking: false
           pr_comment: false
 
       # task-069 / ADR-0051 §6: every public .proto MUST declare explicit namespace options —

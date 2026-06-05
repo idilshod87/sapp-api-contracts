@@ -5,8 +5,8 @@ package sapp.messaging.v1;
 import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
 
-option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 option csharp_namespace = "Sapp.Messaging.V1";
+option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 option java_multiple_files = true;
 option java_outer_classname = "MessagingProto"; // NOT "MessageProto" — collides with the MessageProto message type (protoc Java error). task-069 A.4.
 option java_package = "com.sapp.messaging.v1";

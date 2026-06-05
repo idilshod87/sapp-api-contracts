@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package sapp.common.v1;
 
-option go_package = "github.com/sapp/api-contracts/common/v1;commonv1";
 option csharp_namespace = "Sapp.Common.V1";
+option go_package = "github.com/sapp/api-contracts/common/v1;commonv1";
 option java_multiple_files = true;
 option java_outer_classname = "CommonProto";
 option java_package = "com.sapp.common.v1";

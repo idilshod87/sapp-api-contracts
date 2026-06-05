@@ -4,8 +4,8 @@ package sapp.messaging.v1;
 
 import "google/protobuf/timestamp.proto";
 import "sapp/common/v1/common.proto"; // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
-import "sapp/messaging/v1/message_content.proto";
 import "sapp/messaging/v1/message.proto";
+import "sapp/messaging/v1/message_content.proto";
 
 option csharp_namespace = "Sapp.Messaging.V1";
 option java_multiple_files = true;
