@@ -103,8 +103,10 @@ jobs:
 
       - name: Pack and publish NuGet
         run: |
+          VERSION="${{ needs.auto-tag.outputs.new_tag }}"
+          VERSION="${VERSION#v}"
           dotnet pack gen/csharp/Sapp.ApiContracts.csproj \
-            -c Release -p:PackageVersion=${{ needs.auto-tag.outputs.new_tag }}
+            -c Release -p:PackageVersion=$VERSION
           NUPKG=$(find . -name "*.nupkg" | head -1)
           dotnet nuget push "$NUPKG" \
             --api-key "${{ secrets.GITHUB_TOKEN }}" \
