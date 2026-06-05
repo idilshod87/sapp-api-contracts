@@ -1,6 +1,6 @@
 version: v2
 plugins:
-  - protoc_builtin: csharp
+  - remote: buf.build/protocolbuffers/csharp
     out: gen/csharp
-  - local: protoc-gen-grpc-csharp
+  - remote: buf.build/grpc/csharp
     out: gen/csharp
