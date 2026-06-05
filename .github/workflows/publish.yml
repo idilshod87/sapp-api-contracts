@@ -24,6 +24,8 @@ jobs:
     needs: [auto-tag]
     if: needs.auto-tag.outputs.new_tag != ''
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-action@v1
@@ -62,7 +64,7 @@ jobs:
         run: cd gen/android && ./gradlew publish -Pversion=${{ needs.auto-tag.outputs.new_tag }}
         env:
           GITHUB_ACTOR: ${{ github.actor }}
-          MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+          MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-dotnet:
     needs: [auto-tag]
