@@ -53,9 +53,9 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
-          lint: false
-          breaking: false
-          format: false
+          lint: true
+          breaking: true
+          format: true
 
       - name: Cache gRPC protoc plugins
         uses: actions/cache@v4
@@ -112,9 +112,9 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
-          lint: false
-          breaking: false
-          format: false
+          lint: true
+          breaking: true
+          format: true
       - uses: actions/setup-dotnet@v5.3.0
         with:
           dotnet-version: '10.0.x'
