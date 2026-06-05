@@ -98,3 +98,29 @@ message GroupPermissionsPayload {
   bool can_add_members = 3;
   bool can_pin_messages = 4;
 }
+
+// task-063: event_type = "join_request.new" — pushed to chat admins only when a new join request arrives.
+// RequiresPts=false: one-shot admin notification; no gap detection needed.
+message JoinRequestNewPayload {
+  string chat_id = 1; // UUID string
+  string user_id = 2; // UUID string — the applicant
+  int64 requested_at_unix_ms = 3;
+  reserved 4 to 9;
+}
+
+// task-063: event_type = "join_request.processed" — targeted to the applicant when the request is approved/rejected.
+// RequiresPts=false: one-shot notification.
+message JoinRequestProcessedPayload {
+  string chat_id = 1; // UUID string
+  bool approved = 2; // true = approved, false = rejected
+  reserved 3 to 9;
+}
+
+// task-063: event_type = "chat.member_joined" — broadcast to all members when a join request is approved.
+// RequiresPts=false: one-shot notification.
+message ChatMemberJoinedPayload {
+  string chat_id = 1; // UUID string
+  string user_id = 2; // UUID string — the newly joined member
+  int64 joined_at_unix_ms = 3;
+  reserved 4 to 9;
+}
