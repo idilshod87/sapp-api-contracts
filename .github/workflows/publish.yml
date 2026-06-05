@@ -56,7 +56,7 @@ jobs:
           buf generate --template buf.gen.android.yaml
 
       - name: Compile stubs
-        run: cd gen/android && ./gradlew compileKotlin
+        run: cd gen/android && chmod +x gradlew && ./gradlew compileKotlin
 
       - name: Publish Maven
         run: cd gen/android && ./gradlew publish -Pversion=${{ needs.auto-tag.outputs.new_tag }}
