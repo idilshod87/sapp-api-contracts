@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-action@v1
         with:
-          version: '1.30.0'
+          version: '1.35.0'
           lint: false
           breaking: false
           format: false
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-action@v1
         with:
-          version: '1.30.0'
+          version: '1.35.0'
           lint: false
           breaking: false
           format: false
