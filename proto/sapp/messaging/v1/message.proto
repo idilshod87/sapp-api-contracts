@@ -6,8 +6,9 @@ import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
 
 option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
+option csharp_namespace = "Sapp.Messaging.V1";
 option java_multiple_files = true;
-option java_outer_classname = "MessageProtoProto";
+option java_outer_classname = "MessagingProto"; // NOT "MessageProto" — collides with the MessageProto message type (protoc Java error). task-069 A.4.
 option java_package = "com.sapp.messaging.v1";
 
 // MessageProto — canonical full message object used in WS events (message.new).
@@ -24,5 +25,6 @@ message MessageProto {
   optional sapp.messaging.v1.ForwardFrom forward_from = 8;
   string client_message_id = 9;
   int64 pts = 10;
-  reserved 11 to 19;
+  bool is_deleted = 11; // task-069: parity with server MessageProto.is_deleted
+  reserved 12 to 19;
 }

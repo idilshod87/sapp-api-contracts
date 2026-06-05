@@ -17,3 +17,25 @@ jobs:
           lint: true
           breaking: true
           breaking_against: '.git#branch=origin/main'
+
+      # task-069 / ADR-0051 §6: every public .proto MUST declare explicit namespace options —
+      # csharp_namespace = "Sapp.*.V1" and java_package = "com.sapp.*.v1" WITHOUT a `grpc` infix.
+      - name: Guardrail — explicit namespace options
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            if ! grep -qE '^\s*option\s+csharp_namespace\s*=\s*"Sapp\.[A-Za-z0-9]+\.V1"\s*;' "$f"; then
+              echo "::error file=$f::missing explicit option csharp_namespace = \"Sapp.<Service>.V1\""
+              fail=1
+            fi
+            if ! grep -qE '^\s*option\s+java_package\s*=\s*"com\.sapp\.[a-z0-9]+\.v1"\s*;' "$f"; then
+              echo "::error file=$f::missing/invalid java_package — must be com.sapp.<domain>.v1"
+              fail=1
+            fi
+            if grep -qE '^\s*option\s+java_package\s*=\s*"com\.sapp\.grpc\.' "$f"; then
+              echo "::error file=$f::java_package must not contain a 'grpc' infix"
+              fail=1
+            fi
+          done < <(find proto -name '*.proto')
+          exit $fail

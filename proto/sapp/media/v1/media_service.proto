@@ -2,9 +2,10 @@ syntax = "proto3";
 
 package sapp.media.v1;
 
+option csharp_namespace = "Sapp.Media.V1";
 option java_multiple_files = true;
 option java_outer_classname = "MediaServiceProto";
-option java_package = "com.sapp.grpc.media.v1";
+option java_package = "com.sapp.media.v1";
 
 service MediaService {
   // Proxy upload: client streams bytes to MediaService; S3/MinIO is hidden.

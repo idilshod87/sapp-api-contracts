@@ -1,0 +1,60 @@
+task-069 — Public contract ↔ server proto baseline diff (2026-06-05)
+====================================================================
+ADR-0051 / ADR-0049 / ADR-0042. Pre-flight artifact (L-01).
+
+Source of truth surface = server Sapp.{Messaging,Media,Profile}.Presentation/Grpc/*.proto.
+Target = sapp-api-contracts/proto/sapp/**. This file records the divergence the
+v1.0.12 parity release closes. (Authored from a field-level proto audit; `buf breaking`
+machine output is produced by the pr-validate.yml CI gate on the release PR.)
+
+Headline: contract was behind by 17 RPC / ~44 messages; 22 field-level drifts.
+
+------------------------------------------------------------------
+1. RPCs present server-side, ABSENT from contract (17) — ADDED to contract:
+   DeleteMessages, GetChatUnread, GetTotalUnread, GetMessage, GetMessages,
+   GetRepliedMessage, AddReaction, RemoveReaction, GetMessageReactions,
+   GetAvailableReactions, GetMessageReactionUsers, PinMessage, UnpinMessage,
+   UnpinAllMessages, GetPinnedMessage, ForwardMessages, CopyMessage.
+   (Note: contract's singular DeleteMessage has no server handler — superseded by batch
+    DeleteMessages; kept temporarily, flagged for cleanup.)
+
+2. Supporting messages ADDED to contract (Uuid-normalized):
+   TextEntityProto, ForwardedFromProto, ChatMessageProto, ReactionProto,
+   AvailableReactionProto, ReactionUserProto, ChatUnreadEntryProto, ForwardFailureProto,
+   + 17 Request/Response pairs for the RPCs above.
+
+3. 22 field-drifts:
+   SERVER-side (server string → contract Uuid; realised in Phase D mappers via the shared
+   Sapp.Common.Infrastructure.Protobuf.UuidConverter; contract was already correct):
+     - PhotoContent/VideoContent/VoiceNoteContent/DocumentContent/AudioContent.media_id  (5)
+     - MessageProto.message_id / chat_id / sender_id                                       (3)
+     - MessageProto.reply_to  : ReplyToMessageProto   -> ReplyTo                           (1)
+     - MessageProto.forward_from : ForwardFromMessageProto -> ForwardFrom                  (1)
+     - SendMessageRequest.reply_to : ReplyToMessageProto -> ReplyTo                        (1)
+     - AudioContent.file_name (f7) : add server-side (contract already had it)             (1)
+   CONTRACT-side (applied in this release):
+     - MessageProto.is_deleted (f11)                              [message_proto.proto]
+     - MessagePreviewProto.text_preview (f21), is_deleted (f22)   [messaging_service.proto]
+     - EditMessageTextRequest.entities (f4), quoted_text (f5)
+     - ChatListItemProto.peer_user_id (f9)
+     - MarkReadRequest.up_to_message_id -> last_read_message_id (+ ids -> Uuid)
+     - MarkReadResponse reshape 1 field -> 5 fields (unread_count f1 -> f5)  ⚠ wire-breaking
+
+4. Namespace options normalised (A.3) — every public .proto now declares explicit
+   option csharp_namespace = "Sapp.<Service>.V1" and option java_package = "com.sapp.<domain>.v1":
+     - messaging_service / media_service / profile_service : java_package com.sapp.grpc.* -> com.sapp.*
+     - profile_service : csharp_namespace Sapp.Profile.Grpc -> Sapp.Profile.V1
+     - message_proto : java_outer_classname MessageProtoProto -> MessageProtoMsgs (de-doubled)
+     - explicit csharp_namespace added to all 14 protos (common/events/sync were implicit)
+
+5. A.5 drift discovered in Media/Profile (resolved by the SERVER adopting the contract in
+   Phase C — contract is the single source of truth):
+     - Media: RequestUpload/InitiateMultipart/UploadMediaMeta `type` is int32 server-side
+       vs MediaTypeProto enum in contract -> server adopts the enum.
+     - Profile: UserProfile.display_name (server, f2) vs name (contract, f2) — NAME MISMATCH;
+       contract-only is_online (f5) / last_seen_ms (f6, should be *_unix_ms). REQUIRES OWNER
+       DECISION on the canonical field set before Profile Presentation migration.
+     - media_id stays `string` in MediaService — intentional Media↔Messaging seam, NOT drift.
+
+⚠ All breaking entries are sanctioned (ADR-0051, pre-launch, backward compat not required)
+  and pass CI via buf.yaml breaking.ignore for the v1.0.12 release.

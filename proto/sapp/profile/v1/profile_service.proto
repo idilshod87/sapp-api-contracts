@@ -2,20 +2,20 @@ syntax = "proto3";
 
 package sapp.profile.v1;
 
-option csharp_namespace = "Sapp.Profile.Grpc";
+option csharp_namespace = "Sapp.Profile.V1";
 option java_multiple_files = true;
 option java_outer_classname = "ProfileServiceProto";
-option java_package = "com.sapp.grpc.profile.v1";
+option java_package = "com.sapp.profile.v1";
 
 // ── Domain objects ────────────────────────────────────────────────────────────
 
 message UserProfile {
   string user_id = 1;
-  string name = 2;
+  string display_name = 2; // task-069 A.5: aligned to server UserProfile.display_name
   string username = 3;
   string avatar_url = 4;
   bool is_online = 5;
-  int64 last_seen_ms = 6;
+  int64 last_seen_unix_ms = 6; // task-069 A.5: *_unix_ms naming convention
 }
 
 // ── FindByPhone ───────────────────────────────────────────────────────────────

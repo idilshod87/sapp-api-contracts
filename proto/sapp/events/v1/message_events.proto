@@ -5,6 +5,7 @@ package sapp.events.v1;
 import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
 
+option csharp_namespace = "Sapp.Events.V1";
 option java_multiple_files = true;
 option java_outer_classname = "MessageEventsProto";
 option java_package = "com.sapp.events.v1";
