@@ -9,29 +9,30 @@ option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 
 import "sapp/common/v1/common.proto";
 
-// MessageContent — typed discriminated union per ADR-0049.
-// ForwardFrom and ReplyTo are NOT content types — they are carried as separate fields
-// on Message aggregate / MessageProto / WS event payloads.
+// MessageContent — typed discriminated union for all message body forms (ADR-0049 / task-067).
+// Breaking change from v0.3: MEDIA(2)/FORWARDED(3)/REPLY(4) removed; replaced with
+// PHOTO(2)/VIDEO(5)/VOICE_NOTE(6)/DOCUMENT(7)/AUDIO(8). Fields 3,4 reserved.
+// Reply and Forward are top-level fields on MessageNewPayload (fields 8,9), not content subtypes.
 message MessageContent {
   oneof content {
     TextContent      text       = 1;
     PhotoContent     photo      = 2;
-    // 3 reserved (was ForwardedContent — removed ADR-0049)
-    // 4 reserved (was ReplyContent — removed ADR-0049)
+    // 3 reserved (was ForwardedContent)
+    // 4 reserved (was ReplyContent)
     VideoContent     video      = 5;
     VoiceNoteContent voice_note = 6;
     DocumentContent  document   = 7;
     AudioContent     audio      = 8;
-    // StickerContent  sticker   = 9;  // Phase 3 — next available
+    // StickerContent  sticker   = 9;  // Phase 3
     // PollContent     poll      = 10; // Phase 3
   }
-  reserved 3, 4;
+  reserved 3, 4;      // ForwardedContent / ReplyContent — removed in task-067
   reserved 11 to 19;
 }
 
 message TextContent {
   string text = 1;
-  // entities = 2; // Phase 2: repeated TextEntityProto entities
+  // entities = 2; // Phase 2: TextEntity formatting (mentions, bold, links)
   reserved 2 to 9;
 }
 
@@ -58,7 +59,7 @@ message VideoContent {
 message VoiceNoteContent {
   sapp.common.v1.Uuid media_id         = 1;
   int32               duration_seconds = 2;
-  bytes               waveform         = 3;
+  bytes               waveform         = 3;  // 63 samples [0..31]; may be empty for legacy records
   int64               size_bytes       = 4;
   reserved 5 to 9;
 }
@@ -79,23 +80,26 @@ message AudioContent {
   optional string     title            = 4;
   optional string     performer        = 5;
   string              mime_type        = 6;
-  reserved 7 to 9;
+  string              file_name        = 7;
+  reserved 8 to 9;
 }
 
-// ForwardFrom — context field on Message; NOT a content type.
-message ForwardFrom {
-  sapp.common.v1.Uuid          original_message_id  = 1;
-  sapp.common.v1.Uuid          original_chat_id     = 2;
-  optional sapp.common.v1.Uuid original_sender_id   = 3;  // absent = anonymous forward
-  int64                        forwarded_at_unix_ms  = 4;
-  reserved 5 to 9;
-}
-
-// ReplyTo — context field on Message; NOT a content type.
+// ReplyTo — top-level field on MessageNewPayload (field 8) and MessageProto (field 11).
+// Not a content subtype. Phase 2 adds: contentSnapshot, quote.
 message ReplyTo {
-  sapp.common.v1.Uuid                       message_id = 1;
-  sapp.common.v1.Uuid                       sender_id  = 2;
-  // content = 3;  // Phase 2: optional MessageContent content (cross-chat snapshot)
-  // quote   = 4;  // Phase 2: optional string quote (fragment citation)
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid sender_id  = 2;
+  // optional MessageContent content_snapshot = 3; // Phase 2
+  // optional string           quote           = 4; // Phase 2
   reserved 3 to 9;
+}
+
+// ForwardFrom — top-level field on MessageNewPayload (field 9) and MessageProto (field 12).
+// Not a content subtype. original_sender_id absent = anonymous forward.
+message ForwardFrom {
+  sapp.common.v1.Uuid          original_message_id = 1;
+  sapp.common.v1.Uuid          original_chat_id    = 2;
+  optional sapp.common.v1.Uuid original_sender_id  = 3;
+  int64                        forwarded_at_unix_ms = 4;
+  reserved 5 to 9;
 }

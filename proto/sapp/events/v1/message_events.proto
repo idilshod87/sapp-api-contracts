@@ -10,19 +10,18 @@ import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
 
 // MessageNewPayload — event_type = "message.new".
-// Fields 1-7 preserved without change (backward compatible).
-// Fields 8-9 added (task-067 ADR-0049): reply_to and forward_from context.
-// Old clients that ignore unknown fields continue to work (proto3 wire compatibility).
+// Fields 1-7 unchanged from v0.3 (additive change, task-067).
+// Fields 8,9 added: reply_to and forward_from promoted to top-level (no longer embedded in content).
 message MessageNewPayload {
-  sapp.common.v1.Uuid                    message_id      = 1;
-  sapp.common.v1.Uuid                    chat_id         = 2;
-  sapp.common.v1.Uuid                    sender_id       = 3;
-  int64                                  sent_at_unix_ms = 4;
-  sapp.messaging.v1.MessageContent       content         = 5;  // typed oneof per ADR-0049
-  optional int64                         unread_count    = 6;  // absent = unknown
-  optional bool                          unread_has_more = 7;
-  optional sapp.messaging.v1.ReplyTo     reply_to        = 8;
-  optional sapp.messaging.v1.ForwardFrom forward_from    = 9;
+  sapp.common.v1.Uuid              message_id      = 1;
+  sapp.common.v1.Uuid              chat_id         = 2;
+  sapp.common.v1.Uuid              sender_id       = 3;
+  int64                            sent_at_unix_ms = 4;
+  sapp.messaging.v1.MessageContent content         = 5;  // typed oneof (task-067); was empty in Phase 1
+  optional int64                   unread_count    = 6;  // absent = unknown
+  optional bool                    unread_has_more = 7;
+  optional sapp.messaging.v1.ReplyTo    reply_to      = 8;  // NEW: present if message is a reply
+  optional sapp.messaging.v1.ForwardFrom forward_from = 9;  // NEW: present if message is forwarded
   reserved 10 to 19;
 }
 
