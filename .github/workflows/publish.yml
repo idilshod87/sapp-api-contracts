@@ -70,6 +70,8 @@ jobs:
     needs: [auto-tag]
     if: needs.auto-tag.outputs.new_tag != ''
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-action@v1
@@ -97,7 +99,7 @@ jobs:
             "https://nuget.pkg.github.com/idilshod87/index.json" \
             --name github \
             --username "${{ github.actor }}" \
-            --password "${{ secrets.NUGET_TOKEN }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}" \
             --store-password-in-clear-text
 
       - name: Generate C# stubs
@@ -114,5 +116,5 @@ jobs:
             -c Release -p:PackageVersion=${{ needs.auto-tag.outputs.new_tag }}
           NUPKG=$(find . -name "*.nupkg" | head -1)
           dotnet nuget push "$NUPKG" \
-            --api-key "${{ secrets.NUGET_TOKEN }}" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
             --source https://nuget.pkg.github.com/idilshod87/index.json
