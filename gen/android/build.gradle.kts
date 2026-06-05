@@ -6,6 +6,10 @@ plugins {
 group = "com.sapp"
 version = project.findProperty("version") as String? ?: "0.0.0"
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     api("com.google.protobuf:protobuf-javalite:3.25.3")
     api("io.grpc:grpc-stub:1.65.0")
