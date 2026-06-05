@@ -35,8 +35,8 @@ jobs:
 
       - name: Install protoc + plugins
         run: |
-          apt-get update -y
-          apt-get install -y protobuf-compiler default-jdk-headless
+          sudo apt-get update -y
+          sudo apt-get install -y protobuf-compiler default-jdk-headless
 
           GRPC_JAVA_VER=1.65.0
           curl -Lo /usr/local/bin/protoc-gen-grpc-java \
@@ -84,8 +84,8 @@ jobs:
 
       - name: Install protoc + grpc-csharp plugin
         run: |
-          apt-get update -y
-          apt-get install -y protobuf-compiler
+          sudo apt-get update -y
+          sudo apt-get install -y protobuf-compiler
           GRPC_VER=1.65.0
           curl -Lo /usr/local/bin/protoc-gen-grpc-csharp \
             "https://github.com/grpc/grpc/releases/download/v${GRPC_VER}/grpc_csharp_plugin_${GRPC_VER}_linux_x64.exe"
