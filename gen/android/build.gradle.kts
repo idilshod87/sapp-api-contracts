@@ -21,7 +21,7 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            artifactId = "sapp-contracts-android"
+            artifactId = "api-contracts"
             from(components["java"])
         }
     }
