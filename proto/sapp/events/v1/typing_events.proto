@@ -2,26 +2,26 @@ syntax = "proto3";
 
 package sapp.events.v1;
 
-option java_package = "com.sapp.events.v1";
-option java_multiple_files = true;
-option java_outer_classname = "TypingEventsProto";
-
 import "sapp/common/v1/common.proto";
 
+option java_multiple_files = true;
+option java_outer_classname = "TypingEventsProto";
+option java_package = "com.sapp.events.v1";
+
 enum TypingAction {
-  TYPING_ACTION_UNSPECIFIED        = 0;
-  TYPING_ACTION_TYPING             = 1;
-  TYPING_ACTION_UPLOADING_PHOTO    = 2;
-  TYPING_ACTION_UPLOADING_VIDEO    = 3;
+  TYPING_ACTION_UNSPECIFIED = 0;
+  TYPING_ACTION_TYPING = 1;
+  TYPING_ACTION_UPLOADING_PHOTO = 2;
+  TYPING_ACTION_UPLOADING_VIDEO = 3;
   TYPING_ACTION_UPLOADING_DOCUMENT = 4;
-  TYPING_ACTION_RECORDING_VOICE    = 5;
+  TYPING_ACTION_RECORDING_VOICE = 5;
 }
 
 // TypingStartedPayload — event_type = "typing.started".
 message TypingStartedPayload {
   sapp.common.v1.Uuid chat_id = 1;
   sapp.common.v1.Uuid user_id = 2;
-  TypingAction        action  = 3;
+  TypingAction action = 3;
   reserved 4 to 19;
 }
 

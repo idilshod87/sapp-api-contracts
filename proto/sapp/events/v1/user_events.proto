@@ -2,18 +2,18 @@ syntax = "proto3";
 
 package sapp.events.v1;
 
-option java_package = "com.sapp.events.v1";
+import "sapp/common/v1/common.proto";
+
 option java_multiple_files = true;
 option java_outer_classname = "UserEventsProto";
-
-import "sapp/common/v1/common.proto";
+option java_package = "com.sapp.events.v1";
 
 // UserUpdatedPayload — event_type = "user.updated".
 // Delivered when a user updates profile fields (display_name, username, avatar_url).
 message UserUpdatedPayload {
-  sapp.common.v1.Uuid user_id      = 1;
-  string              display_name = 2;
-  string              username     = 3;
-  string              avatar_url   = 4;
+  sapp.common.v1.Uuid user_id = 1;
+  string display_name = 2;
+  string username = 3;
+  string avatar_url = 4;
   reserved 5 to 19;
 }

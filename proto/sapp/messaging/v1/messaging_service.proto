@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package sapp.messaging.v1;
 
-option java_package = "com.sapp.grpc.messaging.v1";
-option java_multiple_files = true;
-option java_outer_classname = "MessagingServiceProto";
-
 import "google/protobuf/timestamp.proto";
-import "sapp/common/v1/common.proto";  // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
+import "sapp/common/v1/common.proto"; // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
 import "sapp/messaging/v1/message_content.proto";
 import "sapp/messaging/v1/message_proto.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "MessagingServiceProto";
+option java_package = "com.sapp.grpc.messaging.v1";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -36,29 +36,29 @@ enum MessageStatus {
 // task-050: chat type discriminator
 enum ChatType {
   CHAT_TYPE_UNSPECIFIED = 0;
-  CHAT_TYPE_PRIVATE     = 1;
-  CHAT_TYPE_GROUP       = 2;
-  CHAT_TYPE_CHANNEL     = 3;
+  CHAT_TYPE_PRIVATE = 1;
+  CHAT_TYPE_GROUP = 2;
+  CHAT_TYPE_CHANNEL = 3;
 }
 
 // task-050: Phase 1 — MAIN / ARCHIVE. Phase 2 — FOLDER + folder_id.
 enum ChatListType {
   CHAT_LIST_TYPE_UNSPECIFIED = 0;
-  CHAT_LIST_TYPE_MAIN        = 1;
-  CHAT_LIST_TYPE_ARCHIVE     = 2;
-  CHAT_LIST_TYPE_FOLDER      = 3;
+  CHAT_LIST_TYPE_MAIN = 1;
+  CHAT_LIST_TYPE_ARCHIVE = 2;
+  CHAT_LIST_TYPE_FOLDER = 3;
 }
 
 // task-050: client-side localization of last-message preview.
 // TEXT type → render text directly; other types → localize label (e.g. "📷 Фото").
 enum MessageContentType {
   MESSAGE_CONTENT_TYPE_UNSPECIFIED = 0;
-  MESSAGE_CONTENT_TYPE_TEXT        = 1;
-  MESSAGE_CONTENT_TYPE_IMAGE       = 2;
-  MESSAGE_CONTENT_TYPE_VIDEO       = 3;
-  MESSAGE_CONTENT_TYPE_DOCUMENT    = 4;
-  MESSAGE_CONTENT_TYPE_VOICE       = 5;
-  MESSAGE_CONTENT_TYPE_STICKER     = 6;
+  MESSAGE_CONTENT_TYPE_TEXT = 1;
+  MESSAGE_CONTENT_TYPE_IMAGE = 2;
+  MESSAGE_CONTENT_TYPE_VIDEO = 3;
+  MESSAGE_CONTENT_TYPE_DOCUMENT = 4;
+  MESSAGE_CONTENT_TYPE_VOICE = 5;
+  MESSAGE_CONTENT_TYPE_STICKER = 6;
   reserved 7 to 19;
 }
 
@@ -83,9 +83,9 @@ message MessageDto {
 // order encoding: pinned = Int64.MaxValue - pin_rank; normal = last_message_at_unix_ms
 message ChatPosition {
   ChatListType list_type = 1;
-  int32        folder_id = 2;   // only for CHAT_LIST_TYPE_FOLDER (Phase 2)
-  int64        order     = 3;
-  bool         is_pinned = 4;
+  int32 folder_id = 2; // only for CHAT_LIST_TYPE_FOLDER (Phase 2)
+  int64 order = 3;
+  bool is_pinned = 4;
 }
 
 // task-050: Phase 1 preview fields sufficient for ChatList without extra RPCs.
@@ -93,26 +93,26 @@ message ChatPosition {
 //           for the canonical full message type in message_proto.proto.
 // Fields 8-20 reserved for DirectChat extension (reply_to, media, reactions).
 message MessagePreviewProto {
-  string             message_id          = 1;
-  string             sender_id           = 2;
-  string             sender_display_name = 3;   // server-computed from user_profile_snapshots
-  string             text                = 4;
-  MessageContentType content_type        = 5;
-  int64              sent_at_unix_ms     = 6;
-  bool               is_outgoing         = 7;   // server-computed: sender_id == requesting_user_id
+  string message_id = 1;
+  string sender_id = 2;
+  string sender_display_name = 3; // server-computed from user_profile_snapshots
+  string text = 4;
+  MessageContentType content_type = 5;
+  int64 sent_at_unix_ms = 6;
+  bool is_outgoing = 7; // server-computed: sender_id == requesting_user_id
   reserved 8 to 20;
 }
 
 // task-050: replaces old ChatDto in GetChatsResponse.
 message ChatListItemProto {
-  string              chat_id      = 1;
-  ChatType            chat_type    = 2;
-  string              title        = 3;   // for PRIVATE = peer display_name (server-computed)
-  string              avatar_url   = 4;   // CDN URL; empty string if no avatar
-  MessagePreviewProto last_message = 5;   // absent for new chat with no messages
-  int32                 unread_count = 6;
-  repeated ChatPosition positions    = 7;   // Phase 1: 1 element
-  bool                  is_muted     = 8;
+  string chat_id = 1;
+  ChatType chat_type = 2;
+  string title = 3; // for PRIVATE = peer display_name (server-computed)
+  string avatar_url = 4; // CDN URL; empty string if no avatar
+  MessagePreviewProto last_message = 5; // absent for new chat with no messages
+  int32 unread_count = 6;
+  repeated ChatPosition positions = 7; // Phase 1: 1 element
+  bool is_muted = 8;
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
@@ -120,47 +120,47 @@ message ChatListItemProto {
 // Flat fields (text, media_id, ClientMediaSnapshot, reply_to_message_id) removed.
 
 message SendMessageRequest {
-  string                                chat_id          = 1;
-  string                                client_message_id = 2;
-  sapp.messaging.v1.MessageContent      content          = 3;
-  optional sapp.messaging.v1.ReplyTo    reply_to         = 4;
-  reserved 5, 6, 8, 9;  // were: reply_to_message_id, quoted_text, media_id, media_snapshot
+  string chat_id = 1;
+  string client_message_id = 2;
+  sapp.messaging.v1.MessageContent content = 3;
+  optional sapp.messaging.v1.ReplyTo reply_to = 4;
+  reserved 5, 6, 8, 9; // were: reply_to_message_id, quoted_text, media_id, media_snapshot
 }
 
 message SendMessageResponse {
-  string message_id      = 1;
-  bool   replayed        = 2;
-  int64  sent_at_unix_ms = 3;
+  string message_id = 1;
+  bool replayed = 2;
+  int64 sent_at_unix_ms = 3;
 }
 
 // ── GetChatHistory ────────────────────────────────────────────────────────────
 
 message GetChatHistoryRequest {
-  string chat_id           = 1;
+  string chat_id = 1;
   string before_message_id = 2;
-  int32  limit             = 3;
+  int32 limit = 3;
 }
 
 // task-067: GetChatHistory now returns canonical MessageProto (ADR-0049).
 message GetChatHistoryResponse {
   repeated sapp.messaging.v1.MessageProto messages = 1;
-  bool                                    has_more = 2;
+  bool has_more = 2;
 }
 
 // ── EditMessageText ──────────────────────────────────────────────────────────
 
 message EditMessageTextRequest {
-  string chat_id    = 1;
+  string chat_id = 1;
   string message_id = 2;
-  string text       = 3;
+  string text = 3;
   // field 4 reserved for entities (repeated TextEntityProto)
   // field 5 reserved for quoted_text
 }
 
 message EditMessageTextResponse {
-  string message_id        = 1;
-  int64  edited_at_unix_ms = 2;
-  bool   updated           = 3;
+  string message_id = 1;
+  int64 edited_at_unix_ms = 2;
+  bool updated = 3;
 }
 
 // ── DeleteMessage ─────────────────────────────────────────────────────────────
@@ -183,26 +183,26 @@ message MarkReadRequest {
 
 // task-053: additive change — proto3 clients ignoring unknown fields continue to work.
 message MarkReadResponse {
-  int32 unread_count = 1;  // exact count after MarkRead; 0 = all read
+  int32 unread_count = 1; // exact count after MarkRead; 0 = all read
 }
 
 // ── GetChats ──────────────────────────────────────────────────────────────────
 
 enum ChatFilter {
-  CHAT_FILTER_UNSPECIFIED = 0;   // default — treated as MAIN by server
-  CHAT_FILTER_MAIN        = 1;
-  CHAT_FILTER_ARCHIVE     = 2;
+  CHAT_FILTER_UNSPECIFIED = 0; // default — treated as MAIN by server
+  CHAT_FILTER_MAIN = 1;
+  CHAT_FILTER_ARCHIVE = 2;
 }
 
 message GetChatsRequest {
-  int32      page_size  = 1;   // safe rename: same field number, same wire type as former `limit`
-  string     page_token = 2;   // safe rename: same field number, same wire type as former `cursor`
-  ChatFilter filter     = 3;   // new field; proto3 default = CHAT_FILTER_UNSPECIFIED → backward-compatible
+  int32 page_size = 1; // safe rename: same field number, same wire type as former `limit`
+  string page_token = 2; // safe rename: same field number, same wire type as former `cursor`
+  ChatFilter filter = 3; // new field; proto3 default = CHAT_FILTER_UNSPECIFIED → backward-compatible
 }
 
 message GetChatsResponse {
-  repeated ChatListItemProto chats = 1;   // task-050: ChatDto → ChatListItemProto (pre-production breaking change)
-  string             next_page_token = 2;
+  repeated ChatListItemProto chats = 1; // task-050: ChatDto → ChatListItemProto (pre-production breaking change)
+  string next_page_token = 2;
 }
 
 // ── Sync (server-streaming) ───────────────────────────────────────────────────
@@ -213,11 +213,11 @@ message SyncRequest {
 
 message SyncEvent {
   oneof event {
-    MessageDto       new_message      = 1;
-    MessageDto       edited_message   = 2;
+    MessageDto new_message = 1;
+    MessageDto edited_message = 2;
     DeletedMessageEvent deleted_message = 3;
-    ChatListItemProto   chat_updated  = 4;   // task-050: ChatDto replaced with ChatListItemProto
-    ReadReceiptEvent  read_receipt    = 5;
+    ChatListItemProto chat_updated = 4; // task-050: ChatDto replaced with ChatListItemProto
+    ReadReceiptEvent read_receipt = 5;
   }
   int64 pts = 6;
 }
@@ -242,8 +242,8 @@ message CreateDirectChatRequest {
 }
 
 message CreateDirectChatResponse {
-  string chat_id        = 1;
-  bool   already_existed = 2;
+  string chat_id = 1;
+  bool already_existed = 2;
 }
 
 // ── GetChat ───────────────────────────────────────────────────────────────────
@@ -251,26 +251,26 @@ message CreateDirectChatResponse {
 // task-051: full chat metadata for the chat detail screen.
 // Fields 7, 10, 12, 16 reserved — see comments.
 message ChatDetailProto {
-  string       chat_id                    = 1;
-  ChatType     chat_type                  = 2;
-  string       title                      = 3;   // PRIVATE: peer display_name; fallback "Unknown"
-  string       avatar_url                 = 4;   // CDN URL; empty for GROUP/CHANNEL Phase 1
-  string       description                = 5;   // empty for Phase 1 (no DB column yet)
-  int32        member_count               = 6;   // GROUP/CHANNEL only; 0 for DM
-  reserved     7;                                // was unread_count — client reads from ChatListItemProto
-  string       last_read_inbox_message_id = 8;   // scroll-to-unread anchor; empty = no read state yet
-  bool         can_send_messages          = 9;   // Phase 1: true for active members (left_at IS NULL)
-  reserved     10;                               // was is_pinned — client reads positions[0].is_pinned
-  bool         is_muted                   = 11;  // notification suppression; from chat_members.is_muted
-  reserved     12;                               // was is_archived — client reads positions[i].list_type
-  string       peer_user_id               = 13;  // PRIVATE only; empty for GROUP/CHANNEL
-  string       draft_text                 = 14;  // empty = no draft
-  string       draft_reply_to_message_id  = 15;  // empty = top-level draft
-  reserved     16;                               // was last_message — client calls GetHistory
+  string chat_id = 1;
+  ChatType chat_type = 2;
+  string title = 3; // PRIVATE: peer display_name; fallback "Unknown"
+  string avatar_url = 4; // CDN URL; empty for GROUP/CHANNEL Phase 1
+  string description = 5; // empty for Phase 1 (no DB column yet)
+  int32 member_count = 6; // GROUP/CHANNEL only; 0 for DM
+  reserved 7; // was unread_count — client reads from ChatListItemProto
+  string last_read_inbox_message_id = 8; // scroll-to-unread anchor; empty = no read state yet
+  bool can_send_messages = 9; // Phase 1: true for active members (left_at IS NULL)
+  reserved 10; // was is_pinned — client reads positions[0].is_pinned
+  bool is_muted = 11; // notification suppression; from chat_members.is_muted
+  reserved 12; // was is_archived — client reads positions[i].list_type
+  string peer_user_id = 13; // PRIVATE only; empty for GROUP/CHANNEL
+  string draft_text = 14; // empty = no draft
+  string draft_reply_to_message_id = 15; // empty = top-level draft
+  reserved 16; // was last_message — client calls GetHistory
   // Phase 1: 1 element (MAIN or ARCHIVE).
   // NOTE for mobile: positions[0].order is always 0 in GetChatResponse — do NOT use it to update
   // ChatList sort-order cache (authoritative only from GetChatsResponse).
-  repeated ChatPosition positions         = 17;
+  repeated ChatPosition positions = 17;
 }
 
 message GetChatRequest {
@@ -282,50 +282,68 @@ message GetChatResponse {
 }
 
 // task-051: lifecycle RPCs (Phase 1 stubs promoted to real handlers in task-052)
-message OpenChatRequest  { string chat_id = 1; }
+message OpenChatRequest {
+  string chat_id = 1;
+}
 message OpenChatResponse {}
 
-message CloseChatRequest  { string chat_id = 1; }
+message CloseChatRequest {
+  string chat_id = 1;
+}
 message CloseChatResponse {}
 
 // ── task-052: Chat Action RPCs ────────────────────────────────────────────────
 
-message PinChatRequest   { string chat_id = 1; }
-message PinChatResponse  {}
+message PinChatRequest {
+  string chat_id = 1;
+}
+message PinChatResponse {}
 
-message UnpinChatRequest  { string chat_id = 1; }
+message UnpinChatRequest {
+  string chat_id = 1;
+}
 message UnpinChatResponse {}
 
-message ArchiveChatRequest  { string chat_id = 1; }
+message ArchiveChatRequest {
+  string chat_id = 1;
+}
 message ArchiveChatResponse {}
 
-message UnarchiveChatRequest  { string chat_id = 1; }
+message UnarchiveChatRequest {
+  string chat_id = 1;
+}
 message UnarchiveChatResponse {}
 
-message MuteChatRequest   { string chat_id = 1; }  // Phase 1: permanent mute
-message MuteChatResponse  {}
+message MuteChatRequest {
+  string chat_id = 1;
+} // Phase 1: permanent mute
+message MuteChatResponse {}
 
-message UnmuteChatRequest  { string chat_id = 1; }
+message UnmuteChatRequest {
+  string chat_id = 1;
+}
 message UnmuteChatResponse {}
 
-message SetDraftRequest  {
-  string chat_id    = 1;
-  string draft_text = 2;  // max 4096 chars (application-layer validation)
+message SetDraftRequest {
+  string chat_id = 1;
+  string draft_text = 2; // max 4096 chars (application-layer validation)
 }
 message SetDraftResponse {}
 
-message ClearDraftRequest  { string chat_id = 1; }
+message ClearDraftRequest {
+  string chat_id = 1;
+}
 message ClearDraftResponse {}
 
 message DeletePrivateChatRequest {
-  string chat_id  = 1;
-  bool   for_both = 2;
+  string chat_id = 1;
+  bool for_both = 2;
 }
 message DeletePrivateChatResponse {}
 
 message ClearPrivateChatHistoryRequest {
-  string chat_id     = 1;
-  bool   for_me_only = 2;
+  string chat_id = 1;
+  bool for_me_only = 2;
 }
 message ClearPrivateChatHistoryResponse {}
 
@@ -334,18 +352,18 @@ message ClearPrivateChatHistoryResponse {}
 // ReadMention: explicit acknowledgement that the user viewed an @mention.
 // Server resets unread_mentions_count and emits chat.mention_read WS event.
 // No-op if unread_mentions_count == 0 (not an error).
-message ReadMentionRequest  {
-  string chat_id    = 1;  // chat where the mention is
-  string message_id = 2;  // message_id that contains the mention (UUIDv7)
+message ReadMentionRequest {
+  string chat_id = 1; // chat where the mention is
+  string message_id = 2; // message_id that contains the mention (UUIDv7)
 }
 message ReadMentionResponse {}
 
 // MarkChatAsUnread: toggle the "manually marked as unread" flag for a chat.
 // Server emits chat.marked_unread WS event for multi-device sync.
 // State is NOT persisted server-side — client-only (ADR-0044 §Phase 1).
-message MarkChatAsUnreadRequest  {
-  string chat_id         = 1;
-  bool   is_marked_unread = 2;  // true = mark, false = clear
+message MarkChatAsUnreadRequest {
+  string chat_id = 1;
+  bool is_marked_unread = 2; // true = mark, false = clear
 }
 message MarkChatAsUnreadResponse {}
 
@@ -353,222 +371,245 @@ message MarkChatAsUnreadResponse {}
 
 enum MemberRoleProto {
   MEMBER_ROLE_UNSPECIFIED = 0;
-  MEMBER_ROLE_CREATOR     = 1;
-  MEMBER_ROLE_ADMIN       = 2;
-  MEMBER_ROLE_MEMBER      = 3;
-  MEMBER_ROLE_RESTRICTED  = 4;
-  MEMBER_ROLE_BANNED      = 5;
+  MEMBER_ROLE_CREATOR = 1;
+  MEMBER_ROLE_ADMIN = 2;
+  MEMBER_ROLE_MEMBER = 3;
+  MEMBER_ROLE_RESTRICTED = 4;
+  MEMBER_ROLE_BANNED = 5;
 }
 
 enum MemberFilterProto {
   MEMBER_FILTER_UNSPECIFIED = 0;
-  MEMBER_FILTER_RECENT      = 1;
-  MEMBER_FILTER_ADMINS      = 2;
-  MEMBER_FILTER_BANNED      = 3;
-  MEMBER_FILTER_RESTRICTED  = 4;
+  MEMBER_FILTER_RECENT = 1;
+  MEMBER_FILTER_ADMINS = 2;
+  MEMBER_FILTER_BANNED = 3;
+  MEMBER_FILTER_RESTRICTED = 4;
 }
 
 // ── task-059: Phase A — Shared message types ──────────────────────────────────
 
 message AdminRightsProto {
-  bool can_change_info      = 1;
-  bool can_post_messages    = 2;
-  bool can_edit_messages    = 3;
-  bool can_delete_messages  = 4;
-  bool can_invite_users     = 5;
+  bool can_change_info = 1;
+  bool can_post_messages = 2;
+  bool can_edit_messages = 3;
+  bool can_delete_messages = 4;
+  bool can_invite_users = 5;
   bool can_restrict_members = 6;
-  bool can_pin_messages     = 7;
-  bool can_promote_members  = 8;
-  bool can_manage_chat      = 9;
-  bool is_anonymous         = 10;
+  bool can_pin_messages = 7;
+  bool can_promote_members = 8;
+  bool can_manage_chat = 9;
+  bool is_anonymous = 10;
 }
 
 message GroupPermissionsProto {
   bool can_send_messages = 1;
-  bool can_send_media    = 2;
-  bool can_add_members   = 3;
-  bool can_pin_messages  = 4;
-  bool can_embed_links   = 5;
+  bool can_send_media = 2;
+  bool can_add_members = 3;
+  bool can_pin_messages = 4;
+  bool can_embed_links = 5;
 }
 
 message ChatMemberProto {
-  string           user_id                  = 1;
-  MemberRoleProto  role                     = 2;
-  int64            joined_at_unix_ms         = 3;
-  int64            restricted_until_unix_ms  = 4;
-  AdminRightsProto admin_rights             = 5;
-  string           admin_title              = 6;
+  string user_id = 1;
+  MemberRoleProto role = 2;
+  int64 joined_at_unix_ms = 3;
+  int64 restricted_until_unix_ms = 4;
+  AdminRightsProto admin_rights = 5;
+  string admin_title = 6;
 }
 
 message ChatAdminProto {
-  string           user_id             = 1;
-  AdminRightsProto rights              = 2;
-  string           promoted_by_user_id = 3;
-  string           admin_title         = 4;
+  string user_id = 1;
+  AdminRightsProto rights = 2;
+  string promoted_by_user_id = 3;
+  string admin_title = 4;
 }
 
 message JoinRequestProto {
-  string user_id              = 1;
-  string chat_id              = 2;
-  int64  requested_at_unix_ms = 3;
-  string invite_link_url      = 4;
+  string user_id = 1;
+  string chat_id = 2;
+  int64 requested_at_unix_ms = 3;
+  string invite_link_url = 4;
 }
 
 message InviteLinkProto {
-  string url                = 1;
-  string name               = 2;
-  string creator_user_id    = 3;
-  int64  created_at_unix_ms = 4;
-  int64  expire_at_unix_ms  = 5;
-  int32  member_limit       = 6;
-  int32  member_count       = 7;
-  int32  join_request_count = 8;
-  bool   requires_approval  = 9;
-  bool   is_revoked         = 10;
-  bool   is_primary         = 11;
+  string url = 1;
+  string name = 2;
+  string creator_user_id = 3;
+  int64 created_at_unix_ms = 4;
+  int64 expire_at_unix_ms = 5;
+  int32 member_limit = 6;
+  int32 member_count = 7;
+  int32 join_request_count = 8;
+  bool requires_approval = 9;
+  bool is_revoked = 10;
+  bool is_primary = 11;
 }
 
 message InviteLinkMemberProto {
-  string user_id           = 1;
-  int64  joined_at_unix_ms = 2;
+  string user_id = 1;
+  int64 joined_at_unix_ms = 2;
 }
 
 message ChannelSubscriberProto {
-  string user_id               = 1;
-  int64  subscribed_at_unix_ms = 2;
+  string user_id = 1;
+  int64 subscribed_at_unix_ms = 2;
 }
 
-message ToggleAntiSpamRequest   { string chat_id = 1; bool enabled = 2; }
-message ToggleAntiSpamResponse  {}
+message ToggleAntiSpamRequest {
+  string chat_id = 1;
+  bool enabled = 2;
+}
+message ToggleAntiSpamResponse {}
 
-message GetChannelStatisticsRequest  { string chat_id = 1; string period = 2; }
+message GetChannelStatisticsRequest {
+  string chat_id = 1;
+  string period = 2;
+}
 message GetChannelStatisticsResponse {}
 
-message SetDiscussionGroupRequest  { string channel_id = 1; string group_id = 2; }
+message SetDiscussionGroupRequest {
+  string channel_id = 1;
+  string group_id = 2;
+}
 message SetDiscussionGroupResponse {}
 
 // ── task-059: Phase B — Group messages ───────────────────────────────────────
 
 message CreateGroupRequest {
-  string          name        = 1;
-  repeated string user_ids    = 2;
-  string          description = 3;
-  bool            is_public   = 4;
+  string name = 1;
+  repeated string user_ids = 2;
+  string description = 3;
+  bool is_public = 4;
 }
 message CreateGroupResponse {
-  string chat_id                 = 1;
+  string chat_id = 1;
   string primary_invite_link_url = 2;
 }
 
 message UpdateGroupRequest {
-  string chat_id     = 1;
-  string name        = 2;
+  string chat_id = 1;
+  string name = 2;
   string description = 3;
 }
 message UpdateGroupResponse {}
 
-message DeleteGroupRequest  { string chat_id = 1; }
+message DeleteGroupRequest {
+  string chat_id = 1;
+}
 message DeleteGroupResponse {}
 
-message LeaveGroupRequest   { string chat_id = 1; }
-message LeaveGroupResponse  {}
+message LeaveGroupRequest {
+  string chat_id = 1;
+}
+message LeaveGroupResponse {}
 
 message GetGroupMembersRequest {
-  string            chat_id    = 1;
-  MemberFilterProto filter     = 2;
-  int32             page_size  = 3;
-  string            page_token = 4;
+  string chat_id = 1;
+  MemberFilterProto filter = 2;
+  int32 page_size = 3;
+  string page_token = 4;
 }
 message GetGroupMembersResponse {
-  repeated ChatMemberProto members         = 1;
-  string                   next_page_token = 2;
+  repeated ChatMemberProto members = 1;
+  string next_page_token = 2;
 }
 
 message SearchGroupMembersRequest {
-  string chat_id    = 1;
-  string query      = 2;
-  int32  page_size  = 3;
+  string chat_id = 1;
+  string query = 2;
+  int32 page_size = 3;
   string page_token = 4;
 }
 message SearchGroupMembersResponse {
-  repeated ChatMemberProto members         = 1;
-  string                   next_page_token = 2;
+  repeated ChatMemberProto members = 1;
+  string next_page_token = 2;
 }
 
 message AddGroupMembersRequest {
-  string          chat_id  = 1;
+  string chat_id = 1;
   repeated string user_ids = 2;
 }
 message AddGroupMembersResponse {
-  int32           added_count     = 1;
-  int32           skipped_count   = 2;  // already members — not re-added
-  repeated string failed_user_ids = 3;  // banned, not found, or invalid user_id
+  int32 added_count = 1;
+  int32 skipped_count = 2; // already members — not re-added
+  repeated string failed_user_ids = 3; // banned, not found, or invalid user_id
 }
 
 message RemoveGroupMemberRequest {
-  string         chat_id              = 1;
-  string         user_id              = 2;
-  optional int32 ban_duration_seconds = 3;  // absent=no ban; 0=permanent ban; >0=timed ban (seconds)
+  string chat_id = 1;
+  string user_id = 2;
+  optional int32 ban_duration_seconds = 3; // absent=no ban; 0=permanent ban; >0=timed ban (seconds)
 }
 message RemoveGroupMemberResponse {}
 
 message SetMemberStatusRequest {
-  string           chat_id       = 1;
-  string           user_id       = 2;
-  MemberRoleProto  status        = 3;
-  AdminRightsProto admin_rights  = 4;
-  int64            until_unix_ms = 5;
-  string           admin_title   = 6;
+  string chat_id = 1;
+  string user_id = 2;
+  MemberRoleProto status = 3;
+  AdminRightsProto admin_rights = 4;
+  int64 until_unix_ms = 5;
+  string admin_title = 6;
 }
 message SetMemberStatusResponse {}
 
-message GetGroupAdminsRequest  { string chat_id = 1; }
-message GetGroupAdminsResponse { repeated ChatAdminProto admins = 1; }
+message GetGroupAdminsRequest {
+  string chat_id = 1;
+}
+message GetGroupAdminsResponse {
+  repeated ChatAdminProto admins = 1;
+}
 
 message SetGroupUsernameRequest {
-  string chat_id  = 1;
+  string chat_id = 1;
   string username = 2;
 }
 message SetGroupUsernameResponse {}
 
 message SetGroupPermissionsRequest {
-  string                chat_id     = 1;
+  string chat_id = 1;
   GroupPermissionsProto permissions = 2;
 }
 message SetGroupPermissionsResponse {}
 
 message SetSlowModeRequest {
-  string chat_id       = 1;
-  int32  delay_seconds = 2;
+  string chat_id = 1;
+  int32 delay_seconds = 2;
 }
 message SetSlowModeResponse {}
 
-message ToggleHistoryVisibleRequest  { string chat_id = 1; bool visible = 2; }
+message ToggleHistoryVisibleRequest {
+  string chat_id = 1;
+  bool visible = 2;
+}
 message ToggleHistoryVisibleResponse {}
 
-message ToggleHideMembersRequest  { string chat_id = 1; bool hidden = 2; }
+message ToggleHideMembersRequest {
+  string chat_id = 1;
+  bool hidden = 2;
+}
 message ToggleHideMembersResponse {}
 
 message GetJoinRequestsRequest {
-  string chat_id    = 1;
-  int32  page_size  = 2;
+  string chat_id = 1;
+  int32 page_size = 2;
   string page_token = 3;
 }
 message GetJoinRequestsResponse {
-  repeated JoinRequestProto requests        = 1;
-  string                    next_page_token = 2;
+  repeated JoinRequestProto requests = 1;
+  string next_page_token = 2;
 }
 
 message ProcessJoinRequestRequest {
   string chat_id = 1;
   string user_id = 2;
-  bool   approve = 3;
+  bool approve = 3;
 }
 message ProcessJoinRequestResponse {}
 
 message ProcessAllJoinReqsRequest {
   string chat_id = 1;
-  bool   approve = 2;
+  bool approve = 2;
 }
 message ProcessAllJoinReqsResponse {
   int32 processed_count = 1;
@@ -583,10 +624,10 @@ message DeleteMemberMessagesResponse {
 }
 
 message ReportMessageRequest {
-  string chat_id    = 1;
+  string chat_id = 1;
   string message_id = 2;
-  string reason     = 3;
-  string comment    = 4;
+  string reason = 3;
+  string comment = 4;
 }
 message ReportMessageResponse {
   bool ok = 1;
@@ -595,109 +636,150 @@ message ReportMessageResponse {
 // ── task-059: Phase C — Channel messages ─────────────────────────────────────
 
 message CreateChannelRequest {
-  string name        = 1;
-  string username    = 2;
+  string name = 1;
+  string username = 2;
   string description = 3;
 }
 message CreateChannelResponse {
-  string chat_id                 = 1;
+  string chat_id = 1;
   string primary_invite_link_url = 2;
 }
 
 message UpdateChannelRequest {
-  string chat_id     = 1;
-  string name        = 2;
+  string chat_id = 1;
+  string name = 2;
   string description = 3;
-  string username    = 4;
+  string username = 4;
 }
 message UpdateChannelResponse {}
 
-message DeleteChannelRequest    { string chat_id = 1; }
-message DeleteChannelResponse   {}
+message DeleteChannelRequest {
+  string chat_id = 1;
+}
+message DeleteChannelResponse {}
 
-message SubscribeChannelRequest   { string chat_id = 1; }
-message SubscribeChannelResponse  {}
+message SubscribeChannelRequest {
+  string chat_id = 1;
+}
+message SubscribeChannelResponse {}
 
-message UnsubscribeChannelRequest  { string chat_id = 1; }
+message UnsubscribeChannelRequest {
+  string chat_id = 1;
+}
 message UnsubscribeChannelResponse {}
 
 message GetChannelSubscribersRequest {
-  string chat_id    = 1;
-  int32  page_size  = 2;
+  string chat_id = 1;
+  int32 page_size = 2;
   string page_token = 3;
 }
 message GetChannelSubscribersResponse {
-  repeated ChannelSubscriberProto subscribers     = 1;
-  string                          next_page_token = 2;
+  repeated ChannelSubscriberProto subscribers = 1;
+  string next_page_token = 2;
 }
 
-message GetChannelAdminsRequest  { string chat_id = 1; }
-message GetChannelAdminsResponse { repeated ChatAdminProto admins = 1; }
+message GetChannelAdminsRequest {
+  string chat_id = 1;
+}
+message GetChannelAdminsResponse {
+  repeated ChatAdminProto admins = 1;
+}
 
 message SetChannelAdminRequest {
-  string           chat_id     = 1;
-  string           user_id     = 2;
-  AdminRightsProto rights      = 3;
-  string           admin_title = 4;
+  string chat_id = 1;
+  string user_id = 2;
+  AdminRightsProto rights = 3;
+  string admin_title = 4;
 }
 message SetChannelAdminResponse {}
 
-message RemoveChannelAdminRequest  { string chat_id = 1; string user_id = 2; }
+message RemoveChannelAdminRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
 message RemoveChannelAdminResponse {}
 
-message ToggleChannelSigningRequest  { string chat_id = 1; bool enabled = 2; }
+message ToggleChannelSigningRequest {
+  string chat_id = 1;
+  bool enabled = 2;
+}
 message ToggleChannelSigningResponse {}
 
-message ToggleJoinByRequestRequest  { string chat_id = 1; bool enabled = 2; }
+message ToggleJoinByRequestRequest {
+  string chat_id = 1;
+  bool enabled = 2;
+}
 message ToggleJoinByRequestResponse {}
 
 // ── task-059: Phase D — Invite Links messages ─────────────────────────────────
 
-message GetPrimaryInviteLinkRequest  { string chat_id = 1; }
-message GetPrimaryInviteLinkResponse { InviteLinkProto invite_link = 1; }
+message GetPrimaryInviteLinkRequest {
+  string chat_id = 1;
+}
+message GetPrimaryInviteLinkResponse {
+  InviteLinkProto invite_link = 1;
+}
 
-message ReplacePrimaryInviteLinkRequest  { string chat_id = 1; }
-message ReplacePrimaryInviteLinkResponse { InviteLinkProto new_invite_link = 1; }
+message ReplacePrimaryInviteLinkRequest {
+  string chat_id = 1;
+}
+message ReplacePrimaryInviteLinkResponse {
+  InviteLinkProto new_invite_link = 1;
+}
 
 message GetInviteLinksRequest {
-  string chat_id         = 1;
+  string chat_id = 1;
   string creator_user_id = 2;
-  bool   revoked         = 3;
-  int32  page_size       = 4;
-  string page_token      = 5;
+  bool revoked = 3;
+  int32 page_size = 4;
+  string page_token = 5;
 }
 message GetInviteLinksResponse {
-  repeated InviteLinkProto links          = 1;
-  string                   next_page_token = 2;
+  repeated InviteLinkProto links = 1;
+  string next_page_token = 2;
 }
 
-message GetInviteLinkRequest  { string chat_id = 1; string invite_link_url = 2; }
-message GetInviteLinkResponse { InviteLinkProto invite_link = 1; }
+message GetInviteLinkRequest {
+  string chat_id = 1;
+  string invite_link_url = 2;
+}
+message GetInviteLinkResponse {
+  InviteLinkProto invite_link = 1;
+}
 
 message CreateInviteLinkRequest {
-  string chat_id           = 1;
-  string name              = 2;
-  int64  expire_at_unix_ms = 3;
-  int32  member_limit      = 4;
-  bool   requires_approval = 5;
+  string chat_id = 1;
+  string name = 2;
+  int64 expire_at_unix_ms = 3;
+  int32 member_limit = 4;
+  bool requires_approval = 5;
 }
-message CreateInviteLinkResponse { InviteLinkProto invite_link = 1; }
+message CreateInviteLinkResponse {
+  InviteLinkProto invite_link = 1;
+}
 
 message EditInviteLinkRequest {
-  string chat_id           = 1;
-  string invite_link_url   = 2;
-  string name              = 3;
-  int64  expire_at_unix_ms = 4;
-  int32  member_limit      = 5;
-  bool   requires_approval = 6;
+  string chat_id = 1;
+  string invite_link_url = 2;
+  string name = 3;
+  int64 expire_at_unix_ms = 4;
+  int32 member_limit = 5;
+  bool requires_approval = 6;
 }
-message EditInviteLinkResponse { InviteLinkProto invite_link = 1; }
+message EditInviteLinkResponse {
+  InviteLinkProto invite_link = 1;
+}
 
-message RevokeInviteLinkRequest  { string chat_id = 1; string invite_link_url = 2; }
-message RevokeInviteLinkResponse { InviteLinkProto revoked_link = 1; }
+message RevokeInviteLinkRequest {
+  string chat_id = 1;
+  string invite_link_url = 2;
+}
+message RevokeInviteLinkResponse {
+  InviteLinkProto revoked_link = 1;
+}
 
 message DeleteRevokedLinksRequest {
-  string chat_id       = 1;
+  string chat_id = 1;
   string admin_user_id = 2;
 }
 message DeleteRevokedLinksResponse {
@@ -706,31 +788,35 @@ message DeleteRevokedLinksResponse {
 
 message GetInviteLinkMembersRequest {
   string invite_link_url = 1;
-  int32  page_size       = 2;
-  string page_token      = 3;
+  int32 page_size = 2;
+  string page_token = 3;
 }
 message GetInviteLinkMembersResponse {
-  repeated InviteLinkMemberProto members         = 1;
-  string                         next_page_token = 2;
+  repeated InviteLinkMemberProto members = 1;
+  string next_page_token = 2;
 }
 
-message CheckInviteLinkRequest  { string invite_link_url = 1; }
+message CheckInviteLinkRequest {
+  string invite_link_url = 1;
+}
 message CheckInviteLinkResponse {
-  string   chat_id           = 1;
-  string   chat_name         = 2;
-  int32    members_count     = 3;
-  bool     is_public         = 4;
-  bool     requires_approval = 5;
-  bool     is_expired        = 6;
-  bool     is_limit_reached  = 7;
-  ChatType chat_type         = 8;
+  string chat_id = 1;
+  string chat_name = 2;
+  int32 members_count = 3;
+  bool is_public = 4;
+  bool requires_approval = 5;
+  bool is_expired = 6;
+  bool is_limit_reached = 7;
+  ChatType chat_type = 8;
 }
 
-message JoinByInviteLinkRequest  { string invite_link_url = 1; }
+message JoinByInviteLinkRequest {
+  string invite_link_url = 1;
+}
 message JoinByInviteLinkResponse {
   oneof result {
-    string chat_id        = 1;
-    bool   join_requested = 2;
+    string chat_id = 1;
+    bool join_requested = 2;
   }
 }
 
@@ -745,72 +831,72 @@ service MessagingService {
   rpc GetChats(GetChatsRequest) returns (GetChatsResponse);
   rpc Sync(SyncRequest) returns (stream SyncEvent);
   rpc CreateDirectChat(CreateDirectChatRequest) returns (CreateDirectChatResponse);
-  rpc GetChat(GetChatRequest)         returns (GetChatResponse);
-  rpc OpenChat(OpenChatRequest)       returns (OpenChatResponse);
-  rpc CloseChat(CloseChatRequest)     returns (CloseChatResponse);
+  rpc GetChat(GetChatRequest) returns (GetChatResponse);
+  rpc OpenChat(OpenChatRequest) returns (OpenChatResponse);
+  rpc CloseChat(CloseChatRequest) returns (CloseChatResponse);
   // task-052: Chat action RPCs
-  rpc PinChat(PinChatRequest)         returns (PinChatResponse);
-  rpc UnpinChat(UnpinChatRequest)     returns (UnpinChatResponse);
+  rpc PinChat(PinChatRequest) returns (PinChatResponse);
+  rpc UnpinChat(UnpinChatRequest) returns (UnpinChatResponse);
   rpc ArchiveChat(ArchiveChatRequest) returns (ArchiveChatResponse);
   rpc UnarchiveChat(UnarchiveChatRequest) returns (UnarchiveChatResponse);
-  rpc MuteChat(MuteChatRequest)       returns (MuteChatResponse);
-  rpc UnmuteChat(UnmuteChatRequest)   returns (UnmuteChatResponse);
-  rpc SetDraft(SetDraftRequest)       returns (SetDraftResponse);
-  rpc ClearDraft(ClearDraftRequest)   returns (ClearDraftResponse);
-  rpc DeletePrivateChat(DeletePrivateChatRequest)           returns (DeletePrivateChatResponse);
+  rpc MuteChat(MuteChatRequest) returns (MuteChatResponse);
+  rpc UnmuteChat(UnmuteChatRequest) returns (UnmuteChatResponse);
+  rpc SetDraft(SetDraftRequest) returns (SetDraftResponse);
+  rpc ClearDraft(ClearDraftRequest) returns (ClearDraftResponse);
+  rpc DeletePrivateChat(DeletePrivateChatRequest) returns (DeletePrivateChatResponse);
   rpc ClearPrivateChatHistory(ClearPrivateChatHistoryRequest) returns (ClearPrivateChatHistoryResponse);
   // task-055 / ADR-0044: unread tracking amendments
-  rpc ReadMention(ReadMentionRequest)             returns (ReadMentionResponse);
-  rpc MarkChatAsUnread(MarkChatAsUnreadRequest)   returns (MarkChatAsUnreadResponse);
+  rpc ReadMention(ReadMentionRequest) returns (ReadMentionResponse);
+  rpc MarkChatAsUnread(MarkChatAsUnreadRequest) returns (MarkChatAsUnreadResponse);
 
   // task-059: Group RPCs — 06-groups.md (20 core + 1 Phase 2+)
-  rpc CreateGroup(CreateGroupRequest)                   returns (CreateGroupResponse);
-  rpc UpdateGroup(UpdateGroupRequest)                   returns (UpdateGroupResponse);
-  rpc DeleteGroup(DeleteGroupRequest)                   returns (DeleteGroupResponse);
-  rpc LeaveGroup(LeaveGroupRequest)                     returns (LeaveGroupResponse);
-  rpc GetGroupMembers(GetGroupMembersRequest)            returns (GetGroupMembersResponse);
-  rpc SearchGroupMembers(SearchGroupMembersRequest)      returns (SearchGroupMembersResponse);
-  rpc AddGroupMembers(AddGroupMembersRequest)            returns (AddGroupMembersResponse);
-  rpc RemoveGroupMember(RemoveGroupMemberRequest)        returns (RemoveGroupMemberResponse);
-  rpc SetMemberStatus(SetMemberStatusRequest)            returns (SetMemberStatusResponse);
-  rpc GetGroupAdmins(GetGroupAdminsRequest)              returns (GetGroupAdminsResponse);
-  rpc SetGroupUsername(SetGroupUsernameRequest)          returns (SetGroupUsernameResponse);
-  rpc SetGroupPermissions(SetGroupPermissionsRequest)    returns (SetGroupPermissionsResponse);
-  rpc SetSlowMode(SetSlowModeRequest)                    returns (SetSlowModeResponse);
-  rpc ToggleHistoryVisible(ToggleHistoryVisibleRequest)  returns (ToggleHistoryVisibleResponse);
-  rpc ToggleHideMembers(ToggleHideMembersRequest)        returns (ToggleHideMembersResponse);
-  rpc GetJoinRequests(GetJoinRequestsRequest)            returns (GetJoinRequestsResponse);    // shared: Groups + Channels
-  rpc ProcessJoinRequest(ProcessJoinRequestRequest)      returns (ProcessJoinRequestResponse); // shared: Groups + Channels
-  rpc ProcessAllJoinReqs(ProcessAllJoinReqsRequest)      returns (ProcessAllJoinReqsResponse); // Groups only
-  rpc DeleteMemberMessages(DeleteMemberMessagesRequest)  returns (DeleteMemberMessagesResponse);
-  rpc ReportMessage(ReportMessageRequest)                returns (ReportMessageResponse);
-  rpc ToggleAntiSpam(ToggleAntiSpamRequest)              returns (ToggleAntiSpamResponse);     // Phase 2+
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse);
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse);
+  rpc LeaveGroup(LeaveGroupRequest) returns (LeaveGroupResponse);
+  rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse);
+  rpc SearchGroupMembers(SearchGroupMembersRequest) returns (SearchGroupMembersResponse);
+  rpc AddGroupMembers(AddGroupMembersRequest) returns (AddGroupMembersResponse);
+  rpc RemoveGroupMember(RemoveGroupMemberRequest) returns (RemoveGroupMemberResponse);
+  rpc SetMemberStatus(SetMemberStatusRequest) returns (SetMemberStatusResponse);
+  rpc GetGroupAdmins(GetGroupAdminsRequest) returns (GetGroupAdminsResponse);
+  rpc SetGroupUsername(SetGroupUsernameRequest) returns (SetGroupUsernameResponse);
+  rpc SetGroupPermissions(SetGroupPermissionsRequest) returns (SetGroupPermissionsResponse);
+  rpc SetSlowMode(SetSlowModeRequest) returns (SetSlowModeResponse);
+  rpc ToggleHistoryVisible(ToggleHistoryVisibleRequest) returns (ToggleHistoryVisibleResponse);
+  rpc ToggleHideMembers(ToggleHideMembersRequest) returns (ToggleHideMembersResponse);
+  rpc GetJoinRequests(GetJoinRequestsRequest) returns (GetJoinRequestsResponse); // shared: Groups + Channels
+  rpc ProcessJoinRequest(ProcessJoinRequestRequest) returns (ProcessJoinRequestResponse); // shared: Groups + Channels
+  rpc ProcessAllJoinReqs(ProcessAllJoinReqsRequest) returns (ProcessAllJoinReqsResponse); // Groups only
+  rpc DeleteMemberMessages(DeleteMemberMessagesRequest) returns (DeleteMemberMessagesResponse);
+  rpc ReportMessage(ReportMessageRequest) returns (ReportMessageResponse);
+  rpc ToggleAntiSpam(ToggleAntiSpamRequest) returns (ToggleAntiSpamResponse); // Phase 2+
 
   // task-059: Channel RPCs — 07-channels.md (11 core + 2 Phase 2+)
-  rpc CreateChannel(CreateChannelRequest)                   returns (CreateChannelResponse);
-  rpc UpdateChannel(UpdateChannelRequest)                   returns (UpdateChannelResponse);
-  rpc DeleteChannel(DeleteChannelRequest)                   returns (DeleteChannelResponse);
-  rpc SubscribeChannel(SubscribeChannelRequest)             returns (SubscribeChannelResponse);
-  rpc UnsubscribeChannel(UnsubscribeChannelRequest)         returns (UnsubscribeChannelResponse);
-  rpc GetChannelSubscribers(GetChannelSubscribersRequest)   returns (GetChannelSubscribersResponse);
-  rpc GetChannelAdmins(GetChannelAdminsRequest)             returns (GetChannelAdminsResponse);
-  rpc SetChannelAdmin(SetChannelAdminRequest)               returns (SetChannelAdminResponse);
-  rpc RemoveChannelAdmin(RemoveChannelAdminRequest)         returns (RemoveChannelAdminResponse);
-  rpc ToggleChannelSigning(ToggleChannelSigningRequest)     returns (ToggleChannelSigningResponse);
-  rpc ToggleJoinByRequest(ToggleJoinByRequestRequest)       returns (ToggleJoinByRequestResponse);
-  rpc GetChannelStatistics(GetChannelStatisticsRequest)     returns (GetChannelStatisticsResponse); // Phase 2+
-  rpc SetDiscussionGroup(SetDiscussionGroupRequest)         returns (SetDiscussionGroupResponse);    // Phase 2+
+  rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse);
+  rpc UpdateChannel(UpdateChannelRequest) returns (UpdateChannelResponse);
+  rpc DeleteChannel(DeleteChannelRequest) returns (DeleteChannelResponse);
+  rpc SubscribeChannel(SubscribeChannelRequest) returns (SubscribeChannelResponse);
+  rpc UnsubscribeChannel(UnsubscribeChannelRequest) returns (UnsubscribeChannelResponse);
+  rpc GetChannelSubscribers(GetChannelSubscribersRequest) returns (GetChannelSubscribersResponse);
+  rpc GetChannelAdmins(GetChannelAdminsRequest) returns (GetChannelAdminsResponse);
+  rpc SetChannelAdmin(SetChannelAdminRequest) returns (SetChannelAdminResponse);
+  rpc RemoveChannelAdmin(RemoveChannelAdminRequest) returns (RemoveChannelAdminResponse);
+  rpc ToggleChannelSigning(ToggleChannelSigningRequest) returns (ToggleChannelSigningResponse);
+  rpc ToggleJoinByRequest(ToggleJoinByRequestRequest) returns (ToggleJoinByRequestResponse);
+  rpc GetChannelStatistics(GetChannelStatisticsRequest) returns (GetChannelStatisticsResponse); // Phase 2+
+  rpc SetDiscussionGroup(SetDiscussionGroupRequest) returns (SetDiscussionGroupResponse); // Phase 2+
 
   // task-059: Invite Links RPCs — 06b-invite-links.md (11)
-  rpc GetPrimaryInviteLink(GetPrimaryInviteLinkRequest)         returns (GetPrimaryInviteLinkResponse);
+  rpc GetPrimaryInviteLink(GetPrimaryInviteLinkRequest) returns (GetPrimaryInviteLinkResponse);
   rpc ReplacePrimaryInviteLink(ReplacePrimaryInviteLinkRequest) returns (ReplacePrimaryInviteLinkResponse);
-  rpc GetInviteLinks(GetInviteLinksRequest)                     returns (GetInviteLinksResponse);
-  rpc GetInviteLink(GetInviteLinkRequest)                       returns (GetInviteLinkResponse);
-  rpc CreateInviteLink(CreateInviteLinkRequest)                 returns (CreateInviteLinkResponse);
-  rpc EditInviteLink(EditInviteLinkRequest)                     returns (EditInviteLinkResponse);
-  rpc RevokeInviteLink(RevokeInviteLinkRequest)                 returns (RevokeInviteLinkResponse);
-  rpc DeleteRevokedLinks(DeleteRevokedLinksRequest)             returns (DeleteRevokedLinksResponse);
-  rpc GetInviteLinkMembers(GetInviteLinkMembersRequest)         returns (GetInviteLinkMembersResponse);
-  rpc CheckInviteLink(CheckInviteLinkRequest)                   returns (CheckInviteLinkResponse);
-  rpc JoinByInviteLink(JoinByInviteLinkRequest)                 returns (JoinByInviteLinkResponse);
+  rpc GetInviteLinks(GetInviteLinksRequest) returns (GetInviteLinksResponse);
+  rpc GetInviteLink(GetInviteLinkRequest) returns (GetInviteLinkResponse);
+  rpc CreateInviteLink(CreateInviteLinkRequest) returns (CreateInviteLinkResponse);
+  rpc EditInviteLink(EditInviteLinkRequest) returns (EditInviteLinkResponse);
+  rpc RevokeInviteLink(RevokeInviteLinkRequest) returns (RevokeInviteLinkResponse);
+  rpc DeleteRevokedLinks(DeleteRevokedLinksRequest) returns (DeleteRevokedLinksResponse);
+  rpc GetInviteLinkMembers(GetInviteLinkMembersRequest) returns (GetInviteLinkMembersResponse);
+  rpc CheckInviteLink(CheckInviteLinkRequest) returns (CheckInviteLinkResponse);
+  rpc JoinByInviteLink(JoinByInviteLinkRequest) returns (JoinByInviteLinkResponse);
 }

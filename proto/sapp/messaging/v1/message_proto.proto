@@ -2,27 +2,27 @@ syntax = "proto3";
 
 package sapp.messaging.v1;
 
-option java_package = "com.sapp.messaging.v1";
-option java_multiple_files = true;
-option java_outer_classname = "MessageProtoProto";
-option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
-
 import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
+
+option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
+option java_multiple_files = true;
+option java_outer_classname = "MessageProtoProto";
+option java_package = "com.sapp.messaging.v1";
 
 // MessageProto — canonical full message object used in WS events (message.new).
 // NOT the same as MessagePreviewProto (used in ChatListItemProto.last_message).
 // is_outgoing is omitted — client computes: sender_id == own_user_id.
 message MessageProto {
-  sapp.common.v1.Uuid                    message_id        = 1;
-  sapp.common.v1.Uuid                    chat_id           = 2;
-  sapp.common.v1.Uuid                    sender_id         = 3;
-  sapp.messaging.v1.MessageContent       content           = 4;
-  int64                                  sent_at_unix_ms   = 5;
-  optional int64                         edited_at_unix_ms = 6;
-  optional sapp.messaging.v1.ReplyTo     reply_to          = 7;
-  optional sapp.messaging.v1.ForwardFrom forward_from      = 8;
-  string                                 client_message_id = 9;
-  int64                                  pts               = 10;
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid chat_id = 2;
+  sapp.common.v1.Uuid sender_id = 3;
+  sapp.messaging.v1.MessageContent content = 4;
+  int64 sent_at_unix_ms = 5;
+  optional int64 edited_at_unix_ms = 6;
+  optional sapp.messaging.v1.ReplyTo reply_to = 7;
+  optional sapp.messaging.v1.ForwardFrom forward_from = 8;
+  string client_message_id = 9;
+  int64 pts = 10;
   reserved 11 to 19;
 }

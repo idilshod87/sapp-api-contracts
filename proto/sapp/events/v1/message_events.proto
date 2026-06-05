@@ -2,26 +2,26 @@ syntax = "proto3";
 
 package sapp.events.v1;
 
-option java_package = "com.sapp.events.v1";
-option java_multiple_files = true;
-option java_outer_classname = "MessageEventsProto";
-
 import "sapp/common/v1/common.proto";
 import "sapp/messaging/v1/message_content.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "MessageEventsProto";
+option java_package = "com.sapp.events.v1";
 
 // MessageNewPayload — event_type = "message.new".
 // Fields 1-7 unchanged from v0.3 (additive change, task-067).
 // Fields 8,9 added: reply_to and forward_from promoted to top-level (no longer embedded in content).
 message MessageNewPayload {
-  sapp.common.v1.Uuid              message_id      = 1;
-  sapp.common.v1.Uuid              chat_id         = 2;
-  sapp.common.v1.Uuid              sender_id       = 3;
-  int64                            sent_at_unix_ms = 4;
-  sapp.messaging.v1.MessageContent content         = 5;  // typed oneof (task-067); was empty in Phase 1
-  optional int64                   unread_count    = 6;  // absent = unknown
-  optional bool                    unread_has_more = 7;
-  optional sapp.messaging.v1.ReplyTo    reply_to      = 8;  // NEW: present if message is a reply
-  optional sapp.messaging.v1.ForwardFrom forward_from = 9;  // NEW: present if message is forwarded
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid chat_id = 2;
+  sapp.common.v1.Uuid sender_id = 3;
+  int64 sent_at_unix_ms = 4;
+  sapp.messaging.v1.MessageContent content = 5; // typed oneof (task-067); was empty in Phase 1
+  optional int64 unread_count = 6; // absent = unknown
+  optional bool unread_has_more = 7;
+  optional sapp.messaging.v1.ReplyTo reply_to = 8; // NEW: present if message is a reply
+  optional sapp.messaging.v1.ForwardFrom forward_from = 9; // NEW: present if message is forwarded
   reserved 10 to 19;
 }
 
@@ -29,32 +29,32 @@ message MessageNewPayload {
 // Fields 1-5 preserved without change (backward compatible).
 // Field 6 added (task-067): reply_to context (for re-render of bubble).
 message MessageEditedPayload {
-  sapp.common.v1.Uuid              message_id        = 1;
-  sapp.common.v1.Uuid              chat_id           = 2;
-  sapp.common.v1.Uuid              editor_id         = 3;
-  sapp.messaging.v1.MessageContent new_content       = 4;
-  int64                            edited_at_unix_ms = 5;
-  optional sapp.messaging.v1.ReplyTo reply_to        = 6;
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid chat_id = 2;
+  sapp.common.v1.Uuid editor_id = 3;
+  sapp.messaging.v1.MessageContent new_content = 4;
+  int64 edited_at_unix_ms = 5;
+  optional sapp.messaging.v1.ReplyTo reply_to = 6;
   reserved 7 to 19;
 }
 
 // MessageDeletedPayload — event_type = "message.deleted".
 // One frame per deleted message.
 message MessageDeletedPayload {
-  sapp.common.v1.Uuid message_id          = 1;
-  sapp.common.v1.Uuid chat_id             = 2;
-  sapp.common.v1.Uuid deleter_id          = 3;
-  int64               deleted_at_unix_ms  = 4;
-  bool                delete_for_everyone = 5;
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid chat_id = 2;
+  sapp.common.v1.Uuid deleter_id = 3;
+  int64 deleted_at_unix_ms = 4;
+  bool delete_for_everyone = 5;
   reserved 6 to 19;
 }
 
 // MessageReadPayload — event_type = "message.read".
 // up_to_message_id: all messages up to and including this ID are marked read.
 message MessageReadPayload {
-  sapp.common.v1.Uuid chat_id           = 1;
-  sapp.common.v1.Uuid reader_id         = 2;
-  sapp.common.v1.Uuid up_to_message_id  = 3;
-  int64               read_at_unix_ms   = 4;
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid reader_id = 2;
+  sapp.common.v1.Uuid up_to_message_id = 3;
+  int64 read_at_unix_ms = 4;
   reserved 5 to 19;
 }

@@ -3,19 +3,19 @@ syntax = "proto3";
 package sapp.profile.v1;
 
 option csharp_namespace = "Sapp.Profile.Grpc";
-option java_package = "com.sapp.grpc.profile.v1";
 option java_multiple_files = true;
 option java_outer_classname = "ProfileServiceProto";
+option java_package = "com.sapp.grpc.profile.v1";
 
 // ── Domain objects ────────────────────────────────────────────────────────────
 
 message UserProfile {
-  string user_id      = 1;
-  string name         = 2;
-  string username     = 3;
-  string avatar_url   = 4;
-  bool   is_online    = 5;
-  int64  last_seen_ms = 6;
+  string user_id = 1;
+  string name = 2;
+  string username = 3;
+  string avatar_url = 4;
+  bool is_online = 5;
+  int64 last_seen_ms = 6;
 }
 
 // ── FindByPhone ───────────────────────────────────────────────────────────────
@@ -32,14 +32,14 @@ message FindByPhoneResponse {
 // ── SearchUsers ───────────────────────────────────────────────────────────────
 
 message SearchUsersRequest {
-  string query      = 1;
-  int32  page_size  = 2;
+  string query = 1;
+  int32 page_size = 2;
   string page_token = 3;
 }
 
 message SearchUsersResponse {
-  repeated UserProfile users           = 1;
-  string               next_page_token = 2;
+  repeated UserProfile users = 1;
+  string next_page_token = 2;
 }
 
 // ── ProfileService ────────────────────────────────────────────────────────────

@@ -2,180 +2,186 @@ syntax = "proto3";
 
 package sapp.media.v1;
 
-option java_package = "com.sapp.grpc.media.v1";
 option java_multiple_files = true;
 option java_outer_classname = "MediaServiceProto";
+option java_package = "com.sapp.grpc.media.v1";
 
 service MediaService {
-    // Proxy upload: client streams bytes to MediaService; S3/MinIO is hidden.
-    rpc UploadMedia (stream UploadMediaChunk) returns (UploadMediaResponse);
+  // Proxy upload: client streams bytes to MediaService; S3/MinIO is hidden.
+  rpc UploadMedia(stream UploadMediaChunk) returns (UploadMediaResponse);
 
-    rpc RequestUpload            (RequestUploadRequest)            returns (RequestUploadResponse);
-    rpc ConfirmUpload            (ConfirmUploadRequest)            returns (ConfirmUploadResponse);
-    rpc GetMediaInfo             (GetMediaInfoRequest)             returns (GetMediaInfoResponse);
+  rpc RequestUpload(RequestUploadRequest) returns (RequestUploadResponse);
+  rpc ConfirmUpload(ConfirmUploadRequest) returns (ConfirmUploadResponse);
+  rpc GetMediaInfo(GetMediaInfoRequest) returns (GetMediaInfoResponse);
 
-    // Task 038: S3 multipart upload (files > 5 MB)
-    rpc InitiateMultipartUpload  (InitiateMultipartUploadRequest)  returns (InitiateMultipartUploadResponse);
-    rpc RequestUploadPartUrl     (RequestUploadPartUrlRequest)     returns (RequestUploadPartUrlResponse);
-    rpc CompleteMultipartUpload  (CompleteMultipartUploadRequest)  returns (CompleteMultipartUploadResponse);
-    rpc AbortMultipartUpload     (AbortMultipartUploadRequest)     returns (AbortMultipartUploadResponse);
-    rpc GetMultipartUploadStatus (GetMultipartUploadStatusRequest) returns (GetMultipartUploadStatusResponse);
+  // Task 038: S3 multipart upload (files > 5 MB)
+  rpc InitiateMultipartUpload(InitiateMultipartUploadRequest) returns (InitiateMultipartUploadResponse);
+  rpc RequestUploadPartUrl(RequestUploadPartUrlRequest) returns (RequestUploadPartUrlResponse);
+  rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (CompleteMultipartUploadResponse);
+  rpc AbortMultipartUpload(AbortMultipartUploadRequest) returns (AbortMultipartUploadResponse);
+  rpc GetMultipartUploadStatus(GetMultipartUploadStatusRequest) returns (GetMultipartUploadStatusResponse);
 }
 
 enum MediaTypeProto {
-    MEDIA_TYPE_UNSPECIFIED = 0;
-    MEDIA_TYPE_PHOTO       = 1;
-    MEDIA_TYPE_VIDEO       = 2;
-    MEDIA_TYPE_VOICE_NOTE  = 3;
-    MEDIA_TYPE_DOCUMENT    = 4;
-    reserved 5 to 99;
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  MEDIA_TYPE_PHOTO = 1;
+  MEDIA_TYPE_VIDEO = 2;
+  MEDIA_TYPE_VOICE_NOTE = 3;
+  MEDIA_TYPE_DOCUMENT = 4;
+  reserved 5 to 99;
 }
 
 enum MediaStatusProto {
-    MEDIA_STATUS_UNSPECIFIED = 0;
-    MEDIA_STATUS_PENDING     = 1;
-    MEDIA_STATUS_UPLOADED    = 2;
-    MEDIA_STATUS_SCANNING    = 3;
-    MEDIA_STATUS_READY       = 4;
-    MEDIA_STATUS_QUARANTINE  = 5;
-    MEDIA_STATUS_EXPIRED     = 6;
-    reserved 7 to 99;
+  MEDIA_STATUS_UNSPECIFIED = 0;
+  MEDIA_STATUS_PENDING = 1;
+  MEDIA_STATUS_UPLOADED = 2;
+  MEDIA_STATUS_SCANNING = 3;
+  MEDIA_STATUS_READY = 4;
+  MEDIA_STATUS_QUARANTINE = 5;
+  MEDIA_STATUS_EXPIRED = 6;
+  reserved 7 to 99;
 }
 
 enum MediaAccessResultProto {
-    MEDIA_RESULT_UNSPECIFIED            = 0;
-    MEDIA_RESULT_READY                  = 1;
-    MEDIA_RESULT_QUARANTINED            = 2;
-    MEDIA_RESULT_EXPIRED                = 3;
-    MEDIA_RESULT_FORBIDDEN_OR_NOT_FOUND = 4;
-    MEDIA_RESULT_TEMP_UNAVAILABLE       = 5;
-    MEDIA_RESULT_INTERNAL_ERROR         = 6;
+  MEDIA_RESULT_UNSPECIFIED = 0;
+  MEDIA_RESULT_READY = 1;
+  MEDIA_RESULT_QUARANTINED = 2;
+  MEDIA_RESULT_EXPIRED = 3;
+  MEDIA_RESULT_FORBIDDEN_OR_NOT_FOUND = 4;
+  MEDIA_RESULT_TEMP_UNAVAILABLE = 5;
+  MEDIA_RESULT_INTERNAL_ERROR = 6;
 }
 
 message RequestUploadRequest {
-    MediaTypeProto type         = 1;
-    string         content_type = 2;
-    int64          size_bytes   = 3;
+  MediaTypeProto type = 1;
+  string content_type = 2;
+  int64 size_bytes = 3;
 }
 
 message RequestUploadResponse {
-    string              media_id           = 1;
-    string              upload_url         = 2;
-    int64               expires_at_unix_ms = 3;
-    int64               max_size_bytes     = 4;
-    map<string, string> required_headers   = 5;
+  string media_id = 1;
+  string upload_url = 2;
+  int64 expires_at_unix_ms = 3;
+  int64 max_size_bytes = 4;
+  map<string, string> required_headers = 5;
 }
 
 message ConfirmUploadRequest {
-    string media_id = 1;
+  string media_id = 1;
 }
 
 message ConfirmUploadResponse {
-    string media_id            = 1;
-    int32  status              = 2;
-    int64  uploaded_at_unix_ms = 3;
+  string media_id = 1;
+  int32 status = 2;
+  int64 uploaded_at_unix_ms = 3;
 }
 
 message GetMediaInfoRequest {
-    string          media_id   = 1;
-    optional string chat_id    = 2;
-    optional string message_id = 3;
+  string media_id = 1;
+  optional string chat_id = 2;
+  optional string message_id = 3;
 }
 
 message GetMediaInfoResponse {
-    MediaAccessResultProto result        = 1;
-    optional MediaInfoProto info         = 2;
-    optional string         result_detail = 3;
+  MediaAccessResultProto result = 1;
+  optional MediaInfoProto info = 2;
+  optional string result_detail = 3;
 }
 
 message MediaInfoProto {
-    string           media_id                    = 1;
-    MediaTypeProto   type                        = 2;
-    MediaStatusProto status                      = 3;
-    int64            size_bytes                  = 4;
-    string           content_type                = 5;
-    string           checksum_sha256             = 6;
-    string           download_url                = 7;
-    int64            download_expires_at_unix_ms = 8;
-    bool             supports_range              = 9;
+  string media_id = 1;
+  MediaTypeProto type = 2;
+  MediaStatusProto status = 3;
+  int64 size_bytes = 4;
+  string content_type = 5;
+  string checksum_sha256 = 6;
+  string download_url = 7;
+  int64 download_expires_at_unix_ms = 8;
+  bool supports_range = 9;
 }
 
 // Multipart upload messages
 
 message InitiateMultipartUploadRequest {
-    string         client_request_id  = 1;
-    MediaTypeProto type               = 2;
-    string         content_type       = 3;
-    int64          total_size_bytes   = 4;
-    optional int32 chunk_size_hint_mb = 5;
+  string client_request_id = 1;
+  MediaTypeProto type = 2;
+  string content_type = 3;
+  int64 total_size_bytes = 4;
+  optional int32 chunk_size_hint_mb = 5;
 }
 
 message InitiateMultipartUploadResponse {
-    string media_id               = 1;
-    string upload_id              = 2;
-    int32  chunk_size_mb          = 3;
-    int32  recommended_part_count = 4;
-    int32  part_url_ttl_seconds   = 5;
+  string media_id = 1;
+  string upload_id = 2;
+  int32 chunk_size_mb = 3;
+  int32 recommended_part_count = 4;
+  int32 part_url_ttl_seconds = 5;
 }
 
 message RequestUploadPartUrlRequest {
-    string media_id    = 1;
-    int32  part_number = 2;
+  string media_id = 1;
+  int32 part_number = 2;
 }
 
 message RequestUploadPartUrlResponse {
-    string presigned_part_url  = 1;
-    int64  expires_at_unix_ms  = 2;
-    int32  part_number         = 3;
+  string presigned_part_url = 1;
+  int64 expires_at_unix_ms = 2;
+  int32 part_number = 3;
 }
 
 message MultipartPartProto {
-    int32  part_number = 1;
-    string etag        = 2;
+  int32 part_number = 1;
+  string etag = 2;
 }
 
 message CompleteMultipartUploadRequest {
-    string                      media_id = 1;
-    repeated MultipartPartProto parts    = 2;
+  string media_id = 1;
+  repeated MultipartPartProto parts = 2;
 }
 
 message CompleteMultipartUploadResponse {
-    string media_id            = 1;
-    int32  status              = 2;
-    int64  uploaded_at_unix_ms = 3;
-    int32  part_count          = 4;
+  string media_id = 1;
+  int32 status = 2;
+  int64 uploaded_at_unix_ms = 3;
+  int32 part_count = 4;
 }
 
-message AbortMultipartUploadRequest  { string media_id = 1; }
-message AbortMultipartUploadResponse { bool ok = 1; }
+message AbortMultipartUploadRequest {
+  string media_id = 1;
+}
+message AbortMultipartUploadResponse {
+  bool ok = 1;
+}
 
-message GetMultipartUploadStatusRequest { string media_id = 1; }
+message GetMultipartUploadStatusRequest {
+  string media_id = 1;
+}
 
 message GetMultipartUploadStatusResponse {
-    string                      media_id                   = 1;
-    string                      upload_id                  = 2;
-    repeated MultipartPartProto parts_uploaded             = 3;
-    int32                       next_part_number           = 4;
-    int64                       session_expires_at_unix_ms = 5;
+  string media_id = 1;
+  string upload_id = 2;
+  repeated MultipartPartProto parts_uploaded = 3;
+  int32 next_part_number = 4;
+  int64 session_expires_at_unix_ms = 5;
 }
 
 // Proxy upload messages
 
 message UploadMediaChunk {
-    oneof payload {
-        UploadMediaMeta meta = 1;   // first message only: file metadata
-        bytes           data = 2;   // subsequent messages: file content chunks
-    }
+  oneof payload {
+    UploadMediaMeta meta = 1; // first message only: file metadata
+    bytes data = 2; // subsequent messages: file content chunks
+  }
 }
 
 message UploadMediaMeta {
-    MediaTypeProto type         = 1;
-    string         content_type = 2;
-    int64          size_bytes   = 3;
+  MediaTypeProto type = 1;
+  string content_type = 2;
+  int64 size_bytes = 3;
 }
 
 message UploadMediaResponse {
-    string media_id            = 1;
-    int32  status              = 2;
-    int64  uploaded_at_unix_ms = 3;
+  string media_id = 1;
+  int32 status = 2;
+  int64 uploaded_at_unix_ms = 3;
 }

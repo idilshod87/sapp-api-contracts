@@ -2,28 +2,28 @@ syntax = "proto3";
 
 package sapp.events.v1;
 
-option java_package = "com.sapp.events.v1";
+import "sapp/common/v1/common.proto";
+
 option java_multiple_files = true;
 option java_outer_classname = "ChatEventsProto";
-
-import "sapp/common/v1/common.proto";
+option java_package = "com.sapp.events.v1";
 
 enum ChatType {
   CHAT_TYPE_UNSPECIFIED = 0;
-  CHAT_TYPE_DIRECT      = 1;
-  CHAT_TYPE_GROUP       = 2;
-  CHAT_TYPE_CHANNEL     = 3;
+  CHAT_TYPE_DIRECT = 1;
+  CHAT_TYPE_GROUP = 2;
+  CHAT_TYPE_CHANNEL = 3;
 }
 
 // ChatCreatedPayload — event_type = "chat.created".
 // title: absent for Direct; required for Group/Channel.
 message ChatCreatedPayload {
-  sapp.common.v1.Uuid           chat_id            = 1;
-  sapp.common.v1.Uuid           initiator_id       = 2;
-  ChatType                      chat_type          = 3;
-  repeated sapp.common.v1.Uuid member_ids          = 4;
-  int64                         created_at_unix_ms = 5;
-  optional string               title              = 6;
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid initiator_id = 2;
+  ChatType chat_type = 3;
+  repeated sapp.common.v1.Uuid member_ids = 4;
+  int64 created_at_unix_ms = 5;
+  optional string title = 6;
   reserved 7 to 19;
 }
 
@@ -34,8 +34,8 @@ message ChatDeletedPayload {
 
 // task-052: event_type = "chat.history_cleared" — delivered to all DM participants.
 message ChatHistoryClearedPayload {
-  string chat_id            = 1;
-  int64  cleared_at_unix_ms = 2;
+  string chat_id = 1;
+  int64 cleared_at_unix_ms = 2;
 }
 
 // task-053/task-055: event_type = "chat.read_inbox" — delivered to the user's own ws:user:{userId} channel.
@@ -43,17 +43,17 @@ message ChatHistoryClearedPayload {
 // RequiresPts=true (ADR-0044: ordered delivery for gap detection).
 // Field 3 renamed from last_read_message_id → last_read_inbox_message_id (wire-compatible; same field number).
 message ChatReadPayload {
-  string chat_id                    = 1;  // UUID string
-  int32  unread_count               = 2;  // current count for the user; 0 = all read
-  string last_read_inbox_message_id = 3;  // UUIDv7 string — Device B updates local Room last_read
+  string chat_id = 1; // UUID string
+  int32 unread_count = 2; // current count for the user; 0 = all read
+  string last_read_inbox_message_id = 3; // UUIDv7 string — Device B updates local Room last_read
 }
 
 // task-055 / ADR-0044: event_type = "chat.mention_read" — delivered to the user's own ws:user:{userId} channel.
 // Signals that the user read an @mention in a specific chat; secondary devices clear the mention badge.
 // RequiresPts=true (gap detection needed for reliable multi-device sync).
 message ChatMentionReadPayload {
-  string chat_id    = 1;  // UUID string — chat where the mention was read
-  string message_id = 2;  // UUIDv7 string — mentioned message
+  string chat_id = 1; // UUID string — chat where the mention was read
+  string message_id = 2; // UUIDv7 string — mentioned message
 }
 
 // task-055 / ADR-0044: event_type = "chat.marked_unread" — delivered to the user's own ws:user:{userId} channel.
@@ -61,8 +61,8 @@ message ChatMentionReadPayload {
 // RequiresPts=true (gap detection for reliable multi-device sync).
 // NOTE: server does NOT persist this state — client-side only (ADR-0044 §Phase 1 limitation).
 message ChatMarkedUnreadPayload {
-  string chat_id          = 1;  // UUID string
-  bool   is_marked_unread = 2;  // true = marked, false = unmarked
+  string chat_id = 1; // UUID string
+  bool is_marked_unread = 2; // true = marked, false = unmarked
 }
 
 // task-054 / ADR-0045: event_type = "chat.read_outbox" — delivered to the *sender* of read messages.
@@ -70,23 +70,23 @@ message ChatMarkedUnreadPayload {
 // RequiresPts=true (gap-detection needed for reliable delivery to the recipient).
 // Routed via WsEventEnvelope.target_user_id to ws:user:{read_by_user_id's peer}.
 message ChatReadOutboxPayload {
-  string chat_id              = 1;  // UUID string — the chat where MarkRead was called
-  string read_by_user_id      = 2;  // UUID string — user who called MarkRead (initiator)
-  string last_read_message_id = 3;  // UUIDv7 string — highest message ID that was read
+  string chat_id = 1; // UUID string — the chat where MarkRead was called
+  string read_by_user_id = 2; // UUID string — user who called MarkRead (initiator)
+  string last_read_message_id = 3; // UUIDv7 string — highest message ID that was read
 }
 
 // task-062: event_type = "chat.updated" — delivered to all group members when group settings change.
 // RequiresPts=false: settings changes are not ordered/gap-detected; last-write-wins on the client.
 // Only the changed field(s) are set; absent fields = not changed in this event.
 message ChatUpdatedPayload {
-  string chat_id        = 1;  // UUID string
-  optional string  name               = 2;
-  optional string  description        = 3;
-  optional string  username           = 4;  // empty = username removed
-  optional bool    is_public          = 5;
-  optional int32   slow_mode_delay    = 6;
-  optional bool    history_visible    = 7;
-  optional bool    members_hidden     = 8;
+  string chat_id = 1; // UUID string
+  optional string name = 2;
+  optional string description = 3;
+  optional string username = 4; // empty = username removed
+  optional bool is_public = 5;
+  optional int32 slow_mode_delay = 6;
+  optional bool history_visible = 7;
+  optional bool members_hidden = 8;
   optional GroupPermissionsPayload default_permissions = 9;
   reserved 10 to 19;
 }
@@ -94,7 +94,7 @@ message ChatUpdatedPayload {
 // Embedded within ChatUpdatedPayload when group default member permissions change.
 message GroupPermissionsPayload {
   bool can_send_messages = 1;
-  bool can_send_media    = 2;
-  bool can_add_members   = 3;
-  bool can_pin_messages  = 4;
+  bool can_send_media = 2;
+  bool can_add_members = 3;
+  bool can_pin_messages = 4;
 }

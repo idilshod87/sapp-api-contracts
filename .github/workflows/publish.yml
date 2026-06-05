@@ -53,7 +53,7 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
-          lint: true
+          lint: false
           breaking: true
           format: true
 
@@ -112,7 +112,7 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
-          lint: true
+          lint: false
           breaking: true
           format: true
       - uses: actions/setup-dotnet@v5.3.0

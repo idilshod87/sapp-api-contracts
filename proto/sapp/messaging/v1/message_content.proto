@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package sapp.messaging.v1;
 
-option java_package = "com.sapp.messaging.v1";
+import "sapp/common/v1/common.proto";
+
+option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 option java_multiple_files = true;
 option java_outer_classname = "MessageContentProto";
-option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
-
-import "sapp/common/v1/common.proto";
+option java_package = "com.sapp.messaging.v1";
 
 // MessageContent — typed discriminated union for all message body forms (ADR-0049 / task-067).
 // Breaking change from v0.3: MEDIA(2)/FORWARDED(3)/REPLY(4) removed; replaced with
@@ -15,18 +15,18 @@ import "sapp/common/v1/common.proto";
 // Reply and Forward are top-level fields on MessageNewPayload (fields 8,9), not content subtypes.
 message MessageContent {
   oneof content {
-    TextContent      text       = 1;
-    PhotoContent     photo      = 2;
+    TextContent text = 1;
+    PhotoContent photo = 2;
     // 3 reserved (was ForwardedContent)
     // 4 reserved (was ReplyContent)
-    VideoContent     video      = 5;
+    VideoContent video = 5;
     VoiceNoteContent voice_note = 6;
-    DocumentContent  document   = 7;
-    AudioContent     audio      = 8;
+    DocumentContent document = 7;
+    AudioContent audio = 8;
     // StickerContent  sticker   = 9;  // Phase 3
     // PollContent     poll      = 10; // Phase 3
   }
-  reserved 3, 4;      // ForwardedContent / ReplyContent — removed in task-067
+  reserved 3, 4; // ForwardedContent / ReplyContent — removed in task-067
   reserved 11 to 19;
 }
 
@@ -37,50 +37,50 @@ message TextContent {
 }
 
 message PhotoContent {
-  sapp.common.v1.Uuid media_id    = 1;
-  int32               width       = 2;
-  int32               height      = 3;
-  int64               size_bytes  = 4;
-  optional string     caption     = 5;
+  sapp.common.v1.Uuid media_id = 1;
+  int32 width = 2;
+  int32 height = 3;
+  int64 size_bytes = 4;
+  optional string caption = 5;
   reserved 6 to 9;
 }
 
 message VideoContent {
-  sapp.common.v1.Uuid media_id         = 1;
-  int32               width            = 2;
-  int32               height           = 3;
-  int32               duration_seconds = 4;
-  int64               size_bytes       = 5;
-  optional string     caption          = 6;
-  string              mime_type        = 7;
+  sapp.common.v1.Uuid media_id = 1;
+  int32 width = 2;
+  int32 height = 3;
+  int32 duration_seconds = 4;
+  int64 size_bytes = 5;
+  optional string caption = 6;
+  string mime_type = 7;
   reserved 8 to 9;
 }
 
 message VoiceNoteContent {
-  sapp.common.v1.Uuid media_id         = 1;
-  int32               duration_seconds = 2;
-  bytes               waveform         = 3;  // 63 samples [0..31]; may be empty for legacy records
-  int64               size_bytes       = 4;
+  sapp.common.v1.Uuid media_id = 1;
+  int32 duration_seconds = 2;
+  bytes waveform = 3; // 63 samples [0..31]; may be empty for legacy records
+  int64 size_bytes = 4;
   reserved 5 to 9;
 }
 
 message DocumentContent {
-  sapp.common.v1.Uuid media_id   = 1;
-  string              file_name  = 2;
-  string              mime_type  = 3;
-  int64               size_bytes = 4;
-  optional string     caption    = 5;
+  sapp.common.v1.Uuid media_id = 1;
+  string file_name = 2;
+  string mime_type = 3;
+  int64 size_bytes = 4;
+  optional string caption = 5;
   reserved 6 to 9;
 }
 
 message AudioContent {
-  sapp.common.v1.Uuid media_id         = 1;
-  int32               duration_seconds = 2;
-  int64               size_bytes       = 3;
-  optional string     title            = 4;
-  optional string     performer        = 5;
-  string              mime_type        = 6;
-  string              file_name        = 7;
+  sapp.common.v1.Uuid media_id = 1;
+  int32 duration_seconds = 2;
+  int64 size_bytes = 3;
+  optional string title = 4;
+  optional string performer = 5;
+  string mime_type = 6;
+  string file_name = 7;
   reserved 8 to 9;
 }
 
@@ -88,7 +88,7 @@ message AudioContent {
 // Not a content subtype. Phase 2 adds: contentSnapshot, quote.
 message ReplyTo {
   sapp.common.v1.Uuid message_id = 1;
-  sapp.common.v1.Uuid sender_id  = 2;
+  sapp.common.v1.Uuid sender_id = 2;
   // optional MessageContent content_snapshot = 3; // Phase 2
   // optional string           quote           = 4; // Phase 2
   reserved 3 to 9;
@@ -97,9 +97,9 @@ message ReplyTo {
 // ForwardFrom — top-level field on MessageNewPayload (field 9) and MessageProto (field 12).
 // Not a content subtype. original_sender_id absent = anonymous forward.
 message ForwardFrom {
-  sapp.common.v1.Uuid          original_message_id = 1;
-  sapp.common.v1.Uuid          original_chat_id    = 2;
-  optional sapp.common.v1.Uuid original_sender_id  = 3;
-  int64                        forwarded_at_unix_ms = 4;
+  sapp.common.v1.Uuid original_message_id = 1;
+  sapp.common.v1.Uuid original_chat_id = 2;
+  optional sapp.common.v1.Uuid original_sender_id = 3;
+  int64 forwarded_at_unix_ms = 4;
   reserved 5 to 9;
 }
