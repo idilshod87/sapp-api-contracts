@@ -1,0 +1,116 @@
+name: Publish Packages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  auto-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: mathieudutour/github-tag-action@v6
+        id: tag
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-android:
+    needs: [auto-tag]
+    if: needs.auto-tag.outputs.new_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: '1.30.0'
+          lint: false
+          breaking: false
+          format: false
+
+      - name: Install protoc + plugins
+        run: |
+          apt-get update -y
+          apt-get install -y protobuf-compiler default-jdk-headless
+
+          GRPC_JAVA_VER=1.65.0
+          curl -Lo /usr/local/bin/protoc-gen-grpc-java \
+            "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/${GRPC_JAVA_VER}/protoc-gen-grpc-java-${GRPC_JAVA_VER}-linux-x86_64.exe"
+          chmod +x /usr/local/bin/protoc-gen-grpc-java
+
+          GRPC_KOTLIN_VER=1.4.1
+          curl -Lo /usr/local/lib/protoc-gen-grpc-kotlin.jar \
+            "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${GRPC_KOTLIN_VER}/protoc-gen-grpc-kotlin-${GRPC_KOTLIN_VER}-jdk8.jar"
+          cat > /usr/local/bin/protoc-gen-grpc-kotlin << 'EOF'
+          #!/bin/bash
+          exec java -jar /usr/local/lib/protoc-gen-grpc-kotlin.jar "$@"
+          EOF
+          chmod +x /usr/local/bin/protoc-gen-grpc-kotlin
+
+      - name: Generate Kotlin stubs
+        run: |
+          mkdir -p gen/android/src/main/java gen/android/src/main/kotlin
+          buf generate --template buf.gen.android.yaml
+
+      - name: Compile stubs
+        run: cd gen/android && ./gradlew compileKotlin
+
+      - name: Publish Maven
+        run: cd gen/android && ./gradlew publish -Pversion=${{ needs.auto-tag.outputs.new_tag }}
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+
+  publish-dotnet:
+    needs: [auto-tag]
+    if: needs.auto-tag.outputs.new_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: '1.30.0'
+          lint: false
+          breaking: false
+          format: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install protoc + grpc-csharp plugin
+        run: |
+          apt-get update -y
+          apt-get install -y protobuf-compiler
+          GRPC_VER=1.65.0
+          curl -Lo /usr/local/bin/protoc-gen-grpc-csharp \
+            "https://github.com/grpc/grpc/releases/download/v${GRPC_VER}/grpc_csharp_plugin_${GRPC_VER}_linux_x64.exe"
+          chmod +x /usr/local/bin/protoc-gen-grpc-csharp
+
+      - name: Configure NuGet source
+        run: |
+          dotnet nuget add source \
+            "https://nuget.pkg.github.com/idilshod87/index.json" \
+            --name github \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.NUGET_TOKEN }}" \
+            --store-password-in-clear-text
+
+      - name: Generate C# stubs
+        run: |
+          mkdir -p gen/csharp
+          buf generate --template buf.gen.dotnet.yaml
+
+      - name: Compile stubs
+        run: dotnet build gen/csharp/Sapp.ApiContracts.csproj -c Release
+
+      - name: Pack and publish NuGet
+        run: |
+          dotnet pack gen/csharp/Sapp.ApiContracts.csproj \
+            -c Release -p:PackageVersion=${{ needs.auto-tag.outputs.new_tag }}
+          NUPKG=$(find . -name "*.nupkg" | head -1)
+          dotnet nuget push "$NUPKG" \
+            --api-key "${{ secrets.NUGET_TOKEN }}" \
+            --source https://nuget.pkg.github.com/idilshod87/index.json

@@ -1,0 +1,10 @@
+version: v2
+plugins:
+  - protoc_builtin: java
+    out: gen/android/src/main/java
+    opt: lite
+  - local: protoc-gen-grpc-java
+    out: gen/android/src/main/java
+    opt: lite
+  - local: protoc-gen-grpc-kotlin
+    out: gen/android/src/main/kotlin

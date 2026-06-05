@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>Sapp.ApiContracts</PackageId>
+    <Description>Generated gRPC/Protobuf contracts for Sapp platform</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.25.3" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.65.0" />
+  </ItemGroup>
+</Project>
