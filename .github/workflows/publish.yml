@@ -15,7 +15,7 @@ jobs:
     outputs:
       new_tag: ${{ steps.tag.outputs.new_tag }}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.3.3.3.3
         with:
           fetch-depth: 0
       - uses: mathieudutour/github-tag-action@v6.2
@@ -30,7 +30,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.3
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
@@ -76,14 +76,14 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.3
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
           lint: false
           breaking: false
           format: false
-      - uses: actions/setup-dotnet@v4.3.1
+      - uses: actions/setup-dotnet@v4.4.0
         with:
           dotnet-version: '10.0.x'
 
