@@ -42,6 +42,14 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v6.0.3
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
@@ -49,20 +57,27 @@ jobs:
           breaking: false
           format: false
 
-      - name: Install protoc + plugins
+      - name: Cache gRPC protoc plugins
+        uses: actions/cache@v4
+        with:
+          path: /tmp/grpc-plugins
+          key: grpc-plugins-java-1.65.0-kotlin-1.4.1
+
+      - name: Install gRPC protoc plugins
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y protobuf-compiler default-jdk-headless
+          mkdir -p /tmp/grpc-plugins
 
-          GRPC_JAVA_VER=1.65.0
-          curl -Lo /tmp/protoc-gen-grpc-java \
-            "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/${GRPC_JAVA_VER}/protoc-gen-grpc-java-${GRPC_JAVA_VER}-linux-x86_64.exe"
-          sudo install -m 755 /tmp/protoc-gen-grpc-java /usr/local/bin/protoc-gen-grpc-java
+          if [ ! -f /tmp/grpc-plugins/protoc-gen-grpc-java ]; then
+            curl -Lo /tmp/grpc-plugins/protoc-gen-grpc-java \
+              "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.65.0/protoc-gen-grpc-java-1.65.0-linux-x86_64.exe"
+          fi
+          sudo install -m 755 /tmp/grpc-plugins/protoc-gen-grpc-java /usr/local/bin/protoc-gen-grpc-java
 
-          GRPC_KOTLIN_VER=1.4.1
-          curl -Lo /tmp/protoc-gen-grpc-kotlin.jar \
-            "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${GRPC_KOTLIN_VER}/protoc-gen-grpc-kotlin-${GRPC_KOTLIN_VER}-jdk8.jar"
-          printf '#!/bin/bash\nexec java -jar /tmp/protoc-gen-grpc-kotlin.jar "$@"\n' \
+          if [ ! -f /tmp/grpc-plugins/protoc-gen-grpc-kotlin.jar ]; then
+            curl -Lo /tmp/grpc-plugins/protoc-gen-grpc-kotlin.jar \
+              "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/1.4.1/protoc-gen-grpc-kotlin-1.4.1-jdk8.jar"
+          fi
+          printf '#!/bin/bash\nexec java -jar /tmp/grpc-plugins/protoc-gen-grpc-kotlin.jar "$@"\n' \
             | sudo tee /usr/local/bin/protoc-gen-grpc-kotlin > /dev/null
           sudo chmod +x /usr/local/bin/protoc-gen-grpc-kotlin
 
@@ -71,11 +86,8 @@ jobs:
           mkdir -p gen/android/src/main/java gen/android/src/main/kotlin
           buf generate --template buf.gen.android.yaml
 
-      - name: Compile stubs
-        run: cd gen/android && chmod +x gradlew && ./gradlew compileKotlin
-
-      - name: Publish Maven
-        run: cd gen/android && ./gradlew publish -Pversion=${{ needs.auto-tag.outputs.new_tag }}
+      - name: Compile and publish
+        run: cd gen/android && chmod +x gradlew && ./gradlew publish -Pversion=${{ needs.auto-tag.outputs.new_tag }}
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
