@@ -4,6 +4,7 @@ package sapp.messaging.v1;
 
 import "sapp/common/v1/common.proto";
 
+option csharp_namespace = "Sapp.Messaging.V1";
 option go_package = "github.com/sapp/api-contracts/messaging/v1;messagingv1";
 option java_multiple_files = true;
 option java_outer_classname = "MessageContentProto";

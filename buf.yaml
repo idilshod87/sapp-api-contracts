@@ -9,3 +9,15 @@ lint:
 breaking:
   use:
     - FILE
+  # task-069 / ADR-0051: sanctioned breaking changes for the v1.0.12 parity release
+  # (MarkReadResponse reshape, string→Uuid promotions, java_package grpc-infix removal,
+  # Profile csharp namespace .Grpc→.V1, explicit namespace options). Product is pre-launch;
+  # backward compatibility is not required. FOLLOW-UP (backlog): remove these ignores once
+  # main is re-baselined on v1.0.12 so the gate is strict again for future PRs.
+  ignore:
+    - sapp/messaging/v1/messaging_service.proto
+    - sapp/messaging/v1/message_proto.proto # deleted: renamed → message.proto (task-069 A.4)
+    - sapp/messaging/v1/message.proto
+    - sapp/messaging/v1/message_content.proto
+    - sapp/media/v1/media_service.proto
+    - sapp/profile/v1/profile_service.proto

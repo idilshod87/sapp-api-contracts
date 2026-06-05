@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package sapp.sync.v1;
 
+option csharp_namespace = "Sapp.Sync.V1";
 option go_package = "github.com/sapp/api-contracts/sync/v1;syncv1";
 option java_multiple_files = true;
 option java_outer_classname = "WsMessagesProto";

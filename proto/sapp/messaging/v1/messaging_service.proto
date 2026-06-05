@@ -4,12 +4,13 @@ package sapp.messaging.v1;
 
 import "google/protobuf/timestamp.proto";
 import "sapp/common/v1/common.proto"; // PageInfo retained: used by GetHistoryResponse (task-049 §A.3 audit: GetChatsResponse migrated to string next_page_token)
+import "sapp/messaging/v1/message.proto";
 import "sapp/messaging/v1/message_content.proto";
-import "sapp/messaging/v1/message_proto.proto";
 
+option csharp_namespace = "Sapp.Messaging.V1";
 option java_multiple_files = true;
 option java_outer_classname = "MessagingServiceProto";
-option java_package = "com.sapp.grpc.messaging.v1";
+option java_package = "com.sapp.messaging.v1";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ message ChatPosition {
 
 // task-050: Phase 1 preview fields sufficient for ChatList without extra RPCs.
 // task-067: renamed from MessageProto → MessagePreviewProto to free up the name
-//           for the canonical full message type in message_proto.proto.
+//           for the canonical full message type in message.proto.
 // Fields 8-20 reserved for DirectChat extension (reply_to, media, reactions).
 message MessagePreviewProto {
   string message_id = 1;
@@ -101,6 +102,8 @@ message MessagePreviewProto {
   int64 sent_at_unix_ms = 6;
   bool is_outgoing = 7; // server-computed: sender_id == requesting_user_id
   reserved 8 to 20;
+  string text_preview = 21; // task-069: server-rendered preview text
+  bool is_deleted = 22; // task-069: tombstone marker for deleted last message
 }
 
 // task-050: replaces old ChatDto in GetChatsResponse.
@@ -113,6 +116,7 @@ message ChatListItemProto {
   int32 unread_count = 6;
   repeated ChatPosition positions = 7; // Phase 1: 1 element
   bool is_muted = 8;
+  string peer_user_id = 9; // task-069: PRIVATE only; empty for GROUP/CHANNEL
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
@@ -153,8 +157,8 @@ message EditMessageTextRequest {
   string chat_id = 1;
   string message_id = 2;
   string text = 3;
-  // field 4 reserved for entities (repeated TextEntityProto)
-  // field 5 reserved for quoted_text
+  repeated TextEntityProto entities = 4; // task-069
+  string quoted_text = 5; // task-069
 }
 
 message EditMessageTextResponse {
@@ -176,14 +180,22 @@ message DeleteMessageResponse {
 
 // ── MarkRead ──────────────────────────────────────────────────────────────────
 
+// task-069 / ADR-0051: aligned to server surface. Field 2 renamed up_to_message_id →
+// last_read_message_id; ids promoted string → Uuid (ADR-0049).
 message MarkReadRequest {
-  string chat_id = 1;
-  string up_to_message_id = 2;
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid last_read_message_id = 2;
 }
 
-// task-053: additive change — proto3 clients ignoring unknown fields continue to work.
+// task-069 / ADR-0051: contract adopts the rich server MarkReadResponse.
+// BREAKING vs task-053 (unread_count moved field 1 → 5). Sanctioned breaking
+// change, pre-launch (no installed clients); see ADR-0051 / buf.yaml breaking ignore.
 message MarkReadResponse {
-  int32 unread_count = 1; // exact count after MarkRead; 0 = all read
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid last_read_message_id = 2;
+  int64 read_at_unix_ms = 3;
+  bool updated = 4;
+  int32 unread_count = 5; // exact count after MarkRead; 0 = all read
 }
 
 // ── GetChats ──────────────────────────────────────────────────────────────────
@@ -820,6 +832,228 @@ message JoinByInviteLinkResponse {
   }
 }
 
+// ── task-069: Reactions / Pins / Forward / Copy / Unread / Message lookup ─────
+// Surface ported from server messaging.proto so the contract is the single source
+// of truth (ADR-0051). Entity ids use sapp.common.v1.Uuid (ADR-0049).
+
+message TextEntityProto {
+  int32 type = 1; // TextEntityType enum value
+  int32 offset = 2;
+  int32 length = 3;
+  string url = 4; // optional, for Link
+  sapp.common.v1.Uuid user_id = 5; // optional, for Mention
+}
+
+// ForwardedFromProto — forward provenance carried inside ChatMessageProto.
+// Distinct from message_content.proto ForwardFrom (carried on MessageProto / WS payloads).
+message ForwardedFromProto {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+  sapp.common.v1.Uuid sender_id = 3; // unset when anonymous forward
+  int64 forwarded_at_unix_ms = 4;
+}
+
+// ChatMessageProto — full message used by GetMessage(s) / GetRepliedMessage / GetPinnedMessage.
+message ChatMessageProto {
+  sapp.common.v1.Uuid message_id = 1;
+  sapp.common.v1.Uuid chat_id = 2;
+  sapp.common.v1.Uuid sender_id = 3;
+  int64 sent_at_unix_ms = 4;
+  string text = 5;
+  repeated TextEntityProto entities = 6;
+  sapp.common.v1.Uuid reply_to_message_id = 7; // unset if none
+  string quoted_text = 8; // empty if none
+  int64 edited_at_unix_ms = 9; // 0 if not edited
+  int64 deleted_at_unix_ms = 10; // 0 if not deleted
+  bool is_deleted = 11;
+  ForwardedFromProto forwarded_from = 12; // unset if not forwarded
+  optional MessageContent content_typed = 13; // task-067 typed content
+}
+
+message ReactionProto {
+  string emoji = 1;
+  int32 count = 2;
+  bool chosen = 3;
+}
+
+message AvailableReactionProto {
+  string emoji = 1;
+  bool chosen = 2;
+}
+
+message ReactionUserProto {
+  sapp.common.v1.Uuid user_id = 1;
+  int64 reacted_at_unix_ms = 2;
+}
+
+message ChatUnreadEntryProto {
+  sapp.common.v1.Uuid chat_id = 1;
+  int32 unread_count = 2;
+  bool has_more_unread = 3;
+}
+
+// DeleteMessages — batch delete (server surface; supersedes singular DeleteMessage).
+message DeleteMessagesRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  repeated sapp.common.v1.Uuid message_ids = 2; // up to 50
+  bool for_all = 3; // Phase 1: must be true
+}
+message DeleteMessagesResponse {
+  int32 deleted_count = 1;
+  int32 skipped_count = 2;
+}
+
+message GetChatUnreadRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+}
+message GetChatUnreadResponse {
+  sapp.common.v1.Uuid chat_id = 1;
+  int32 unread_count = 2;
+  bool has_more_unread = 3;
+}
+
+message GetTotalUnreadRequest {}
+message GetTotalUnreadResponse {
+  int32 total_unread_count = 1;
+  int32 unread_chat_count = 2;
+  repeated ChatUnreadEntryProto per_chat = 3;
+}
+
+message GetMessageRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message GetMessageResponse {
+  ChatMessageProto message = 1;
+}
+
+message GetMessagesRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  repeated sapp.common.v1.Uuid message_ids = 2; // 1..100, deduplicated server-side
+}
+message GetMessagesResponse {
+  repeated ChatMessageProto messages = 1; // order NOT guaranteed; map by message_id
+  int32 requested_count = 2;
+  int32 found_count = 3;
+}
+
+message GetRepliedMessageRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message GetRepliedMessageResponse {
+  ChatMessageProto message = 1;
+}
+
+message AddReactionRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+  string emoji = 3;
+}
+message AddReactionResponse {
+  sapp.common.v1.Uuid message_id = 1;
+  string emoji = 2;
+  int64 reacted_at_unix_ms = 3;
+}
+
+message RemoveReactionRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+  string emoji = 3;
+}
+message RemoveReactionResponse {
+  bool ok = 1;
+}
+
+message GetMessageReactionsRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message GetMessageReactionsResponse {
+  repeated ReactionProto reactions = 1; // grouped per emoji; count DESC, emoji ASC
+}
+
+message GetAvailableReactionsRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message GetAvailableReactionsResponse {
+  repeated AvailableReactionProto reactions = 1;
+}
+
+message GetMessageReactionUsersRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+  string emoji = 3;
+  int32 page_size = 4; // 1..100; 0 → 20
+  string page_token = 5;
+}
+message GetMessageReactionUsersResponse {
+  repeated ReactionUserProto users = 1;
+  string next_page_token = 2;
+}
+
+message PinMessageRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message PinMessageResponse {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+  int64 pinned_at_unix_ms = 3;
+  bool replaced = 4;
+}
+
+message UnpinMessageRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+  sapp.common.v1.Uuid message_id = 2;
+}
+message UnpinMessageResponse {
+  bool unpinned = 1;
+}
+
+message UnpinAllMessagesRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+}
+message UnpinAllMessagesResponse {
+  int32 unpinned_count = 1;
+}
+
+message GetPinnedMessageRequest {
+  sapp.common.v1.Uuid chat_id = 1;
+}
+message GetPinnedMessageResponse {
+  ChatMessageProto message = 1; // unset when no active pin
+}
+
+message ForwardFailureProto {
+  sapp.common.v1.Uuid source_message_id = 1;
+  string reason = 2; // not_found | content_error | internal_error
+}
+message ForwardMessagesRequest {
+  sapp.common.v1.Uuid from_chat_id = 1;
+  sapp.common.v1.Uuid to_chat_id = 2;
+  repeated sapp.common.v1.Uuid message_ids = 3; // 1..50; order preserved
+  bool silent = 4;
+  bool no_sender = 5;
+}
+message ForwardMessagesResponse {
+  repeated sapp.common.v1.Uuid forwarded_message_ids = 1; // order preserved
+  int32 succeeded_count = 2;
+  int32 failed_count = 3;
+  repeated ForwardFailureProto failures = 4;
+}
+
+message CopyMessageRequest {
+  sapp.common.v1.Uuid from_chat_id = 1;
+  sapp.common.v1.Uuid to_chat_id = 2;
+  sapp.common.v1.Uuid message_id = 3;
+}
+message CopyMessageResponse {
+  sapp.common.v1.Uuid copied_message_id = 1;
+  int64 sent_at_unix_ms = 2;
+}
+
 // ── MessagingService ──────────────────────────────────────────────────────────
 
 service MessagingService {
@@ -848,6 +1082,25 @@ service MessagingService {
   // task-055 / ADR-0044: unread tracking amendments
   rpc ReadMention(ReadMentionRequest) returns (ReadMentionResponse);
   rpc MarkChatAsUnread(MarkChatAsUnreadRequest) returns (MarkChatAsUnreadResponse);
+
+  // task-069 / ADR-0051: message-core surface ported to the contract (single source of truth)
+  rpc DeleteMessages(DeleteMessagesRequest) returns (DeleteMessagesResponse);
+  rpc GetChatUnread(GetChatUnreadRequest) returns (GetChatUnreadResponse);
+  rpc GetTotalUnread(GetTotalUnreadRequest) returns (GetTotalUnreadResponse);
+  rpc GetMessage(GetMessageRequest) returns (GetMessageResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc GetRepliedMessage(GetRepliedMessageRequest) returns (GetRepliedMessageResponse);
+  rpc AddReaction(AddReactionRequest) returns (AddReactionResponse);
+  rpc RemoveReaction(RemoveReactionRequest) returns (RemoveReactionResponse);
+  rpc GetMessageReactions(GetMessageReactionsRequest) returns (GetMessageReactionsResponse);
+  rpc GetAvailableReactions(GetAvailableReactionsRequest) returns (GetAvailableReactionsResponse);
+  rpc GetMessageReactionUsers(GetMessageReactionUsersRequest) returns (GetMessageReactionUsersResponse);
+  rpc PinMessage(PinMessageRequest) returns (PinMessageResponse);
+  rpc UnpinMessage(UnpinMessageRequest) returns (UnpinMessageResponse);
+  rpc UnpinAllMessages(UnpinAllMessagesRequest) returns (UnpinAllMessagesResponse);
+  rpc GetPinnedMessage(GetPinnedMessageRequest) returns (GetPinnedMessageResponse);
+  rpc ForwardMessages(ForwardMessagesRequest) returns (ForwardMessagesResponse);
+  rpc CopyMessage(CopyMessageRequest) returns (CopyMessageResponse);
 
   // task-059: Group RPCs — 06-groups.md (20 core + 1 Phase 2+)
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
