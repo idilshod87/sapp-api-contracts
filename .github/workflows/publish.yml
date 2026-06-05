@@ -39,18 +39,16 @@ jobs:
           sudo apt-get install -y protobuf-compiler default-jdk-headless
 
           GRPC_JAVA_VER=1.65.0
-          curl -Lo /usr/local/bin/protoc-gen-grpc-java \
+          curl -Lo /tmp/protoc-gen-grpc-java \
             "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/${GRPC_JAVA_VER}/protoc-gen-grpc-java-${GRPC_JAVA_VER}-linux-x86_64.exe"
-          chmod +x /usr/local/bin/protoc-gen-grpc-java
+          sudo install -m 755 /tmp/protoc-gen-grpc-java /usr/local/bin/protoc-gen-grpc-java
 
           GRPC_KOTLIN_VER=1.4.1
-          curl -Lo /usr/local/lib/protoc-gen-grpc-kotlin.jar \
+          curl -Lo /tmp/protoc-gen-grpc-kotlin.jar \
             "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${GRPC_KOTLIN_VER}/protoc-gen-grpc-kotlin-${GRPC_KOTLIN_VER}-jdk8.jar"
-          cat > /usr/local/bin/protoc-gen-grpc-kotlin << 'EOF'
-          #!/bin/bash
-          exec java -jar /usr/local/lib/protoc-gen-grpc-kotlin.jar "$@"
-          EOF
-          chmod +x /usr/local/bin/protoc-gen-grpc-kotlin
+          printf '#!/bin/bash\nexec java -jar /tmp/protoc-gen-grpc-kotlin.jar "$@"\n' \
+            | sudo tee /usr/local/bin/protoc-gen-grpc-kotlin > /dev/null
+          sudo chmod +x /usr/local/bin/protoc-gen-grpc-kotlin
 
       - name: Generate Kotlin stubs
         run: |
