@@ -1,6 +1,6 @@
 version: v2
 plugins:
-  - remote: buf.build/protocolbuffers/java
+  - protoc_builtin: java
     out: gen/android/src/main/java
     opt: lite
   - local: protoc-gen-grpc-java

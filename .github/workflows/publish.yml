@@ -61,11 +61,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/grpc-plugins
-          key: grpc-plugins-java-1.65.0-kotlin-1.4.1
+          key: grpc-plugins-protoc-25.3-java-1.65.0-kotlin-1.4.1
 
-      - name: Install gRPC protoc plugins
+      - name: Install protoc + gRPC plugins
         run: |
           mkdir -p /tmp/grpc-plugins
+
+          # protoc 25.3 — matches protobuf-javalite:3.25.3 in build.gradle.kts
+          if [ ! -f /tmp/grpc-plugins/protoc ]; then
+            curl -Lo /tmp/protoc.zip \
+              "https://github.com/protocolbuffers/protobuf/releases/download/v25.3/protoc-25.3-linux-x86_64.zip"
+            unzip -o /tmp/protoc.zip -d /tmp/protoc-dist bin/protoc > /dev/null
+            cp /tmp/protoc-dist/bin/protoc /tmp/grpc-plugins/protoc
+          fi
+          sudo install -m 755 /tmp/grpc-plugins/protoc /usr/local/bin/protoc
 
           if [ ! -f /tmp/grpc-plugins/protoc-gen-grpc-java ]; then
             curl -Lo /tmp/grpc-plugins/protoc-gen-grpc-java \
