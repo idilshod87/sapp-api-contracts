@@ -673,7 +673,11 @@ message DeleteChannelResponse {}
 message SubscribeChannelRequest {
   string chat_id = 1;
 }
-message SubscribeChannelResponse {}
+message SubscribeChannelResponse {
+  // Mirrors JoinByInviteLinkResponse.join_requested: discriminates the two SubscribeChannel outcomes.
+  // false = subscribed immediately; true = JoinRequest created (channel has ToggleJoinByRequest enabled).
+  bool join_requested = 1;
+}
 
 message UnsubscribeChannelRequest {
   string chat_id = 1;
