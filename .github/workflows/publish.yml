@@ -9,12 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.3
-      # breaking: false for the task-069/ADR-0051 v1.0.12 re-baseline (fully wire-incompatible,
-      # sanctioned pre-launch). FOLLOW-UP: re-enable once v1.0.12 is the new main baseline.
+      # lint: true — debt rules excepted in buf.yaml (see pr-validate.yml). breaking stays off on the
+      # publish/push path by design (NL-03): the wire-compat gate lives in pr-validate.yml (PR→main);
+      # publish only builds/publishes the already-merged-and-gated contract.
       - uses: bufbuild/buf-action@v1
         with:
           version: '1.35.0'
-          lint: false
+          lint: true
           breaking: false
           format: true
 
