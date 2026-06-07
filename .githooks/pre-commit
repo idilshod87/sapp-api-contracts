@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook for sapp-api-contracts.
+# Mirrors .github/workflows/pr-validate.yml so proto issues are caught locally
+# instead of failing CI. Skips `buf breaking` (that gate compares a PR against
+# the main baseline and only makes sense at PR level).
+#
+# Install once per clone:   git config core.hooksPath .githooks
+#
+set -euo pipefail
+
+# Only run when staged proto files are involved.
+mapfile -t staged_protos < <(git diff --cached --name-only --diff-filter=ACM -- 'proto/**/*.proto')
+if [ ${#staged_protos[@]} -eq 0 ]; then
+  exit 0
+fi
+
+if ! command -v buf >/dev/null 2>&1; then
+  echo "pre-commit: 'buf' not found in PATH — install it (https://buf.build/docs/installation) or skip with 'git commit --no-verify'." >&2
+  exit 1
+fi
+
+# 1) Format gate (non-destructive, mirrors buf-action's format step).
+if ! buf format --diff --exit-code >/dev/null 2>&1; then
+  echo "pre-commit: proto files are not canonically formatted." >&2
+  echo "            Run 'buf format -w' and stage the changes (do not align fields/comments by hand)." >&2
+  exit 1
+fi
+
+# 2) Lint gate.
+if ! buf lint; then
+  echo "pre-commit: 'buf lint' failed — fix the violations above." >&2
+  exit 1
+fi
+
+# 3) Guardrail — explicit namespace options (task-069 / ADR-0051 §6).
+fail=0
+while IFS= read -r f; do
+  if ! grep -qE '^[[:space:]]*option[[:space:]]+csharp_namespace[[:space:]]*=[[:space:]]*"Sapp\.[A-Za-z0-9]+\.V1"[[:space:]]*;' "$f"; then
+    echo "pre-commit: $f — missing explicit option csharp_namespace = \"Sapp.<Service>.V1\"" >&2
+    fail=1
+  fi
+  if ! grep -qE '^[[:space:]]*option[[:space:]]+java_package[[:space:]]*=[[:space:]]*"com\.sapp\.[a-z0-9]+\.v1"[[:space:]]*;' "$f"; then
+    echo "pre-commit: $f — missing/invalid java_package (must be com.sapp.<domain>.v1)" >&2
+    fail=1
+  fi
+  if grep -qE '^[[:space:]]*option[[:space:]]+java_package[[:space:]]*=[[:space:]]*"com\.sapp\.grpc\.' "$f"; then
+    echo "pre-commit: $f — java_package must not contain a 'grpc' infix" >&2
+    fail=1
+  fi
+done < <(find proto -name '*.proto')
+if [ "$fail" -ne 0 ]; then
+  exit 1
+fi
+
+exit 0

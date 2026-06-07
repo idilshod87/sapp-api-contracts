@@ -23,6 +23,18 @@ third_party/sapp-api-contracts/
 The Android Gradle build adds `proto/` as an additional protobuf source directory
 and generates Kotlin + Java stubs via the `com.google.protobuf` plugin.
 
+## Development
+
+Install the shared git hooks once per clone:
+
+```
+git config core.hooksPath .githooks
+```
+
+The `pre-commit` hook mirrors CI (`buf format`, `buf lint`, namespace guardrail)
+so proto issues are caught locally. It requires [`buf`](https://buf.build/docs/installation)
+in `PATH`. Do not align fields/comments by hand — run `buf format -w` instead.
+
 ## Versioning
 
 Breaking changes bump the package version suffix (`v1` → `v2`).
