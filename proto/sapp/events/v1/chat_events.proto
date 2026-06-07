@@ -126,6 +126,39 @@ message ChatMemberJoinedPayload {
   reserved 4 to 9;
 }
 
+// task-076: event_type = "member.added" — fanned out to all current group/channel members when a
+// member is added (AddGroupMembers, channel subscribe, approved join request).
+// RequiresPts=true (ADR-0044): membership changes chat state; gap detection required.
+message MemberAddedPayload {
+  sapp.common.v1.Uuid chat_id  = 1;
+  sapp.common.v1.Uuid user_id  = 2; // the added member
+  sapp.common.v1.Uuid added_by = 3; // actor (or the member itself for a self-subscribe / invite-link join)
+  int32 role = 4;                    // MemberRole (Creator=1, Admin=2, Member=3, Restricted=4, Banned=5)
+  optional string invite_link_url = 5; // task-064: present when the member joined via an invite link
+  reserved 6 to 15;
+}
+
+// task-076: event_type = "member.removed" — fanned out to all remaining members AND to the
+// removed/left member itself (so their client removes the chat / multi-device sync of the leave).
+// RequiresPts=true (ADR-0044): membership changes chat state; gap detection required.
+message MemberRemovedPayload {
+  sapp.common.v1.Uuid chat_id    = 1;
+  sapp.common.v1.Uuid user_id    = 2; // the removed / left member
+  sapp.common.v1.Uuid removed_by = 3; // actor for a kick; the member itself for a leave/unsubscribe
+  MemberRemovalReason reason = 4;
+  reserved 5 to 15;
+}
+
+// task-076: why a member was removed. LEFT/KICKED are produced today; BANNED (value 3) is reserved —
+// the ban-removal WS push is tracked in task-079.
+enum MemberRemovalReason {
+  MEMBER_REMOVAL_REASON_UNSPECIFIED = 0;
+  MEMBER_REMOVAL_REASON_LEFT        = 1; // voluntary leave / channel unsubscribe
+  MEMBER_REMOVAL_REASON_KICKED      = 2; // removed by an admin/creator
+  reserved 3;                            // BANNED — task-079 (ban-removal WS push)
+  reserved "MEMBER_REMOVAL_REASON_BANNED";
+}
+
 // task-065 / ADR-0046 Variant A': cross-service fan-out event Messaging → WsGateway.
 // NF-03: the live Kafka wire contract is the hand-written C# IntegrationEvent
 // (Sapp.Messaging.IntegrationEvents.GroupMessageDeliveryEvent, JSON). This message documents that
