@@ -12,9 +12,12 @@ lint:
     #   ENUM_VALUE_PREFIX          — *Proto enums lack the SCREAMING_SNAKE enum-name prefix
     #   PACKAGE_SAME_GO_PACKAGE    — go_package option drift across the package
     #   RPC_RESPONSE_STANDARD_NAME — non-standard response message names
+    #   RPC_REQUEST_STANDARD_NAME  — MediaService.UploadMedia uses a client-streaming chunk type
+    #                                (UploadMediaChunk), semantically correct but not *Request-named
     - ENUM_VALUE_PREFIX
     - PACKAGE_SAME_GO_PACKAGE
     - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_STANDARD_NAME
 breaking:
   use:
     - FILE
