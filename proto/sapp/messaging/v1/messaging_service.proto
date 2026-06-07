@@ -692,6 +692,8 @@ message GetChannelSubscribersRequest {
 message GetChannelSubscribersResponse {
   repeated ChannelSubscriberProto subscribers = 1;
   string next_page_token = 2;
+  // task-066 AC-04: total active (non-banned) subscriber count.
+  int32 total_count = 3;
 }
 
 message GetChannelAdminsRequest {
