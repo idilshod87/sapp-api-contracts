@@ -271,7 +271,11 @@ message ChatDetailProto {
   int32 member_count = 6; // GROUP/CHANNEL only; 0 for DM
   reserved 7; // was unread_count — client reads from ChatListItemProto
   string last_read_inbox_message_id = 8; // scroll-to-unread anchor; empty = no read state yet
-  bool can_send_messages = 9; // Phase 1: true for active members (left_at IS NULL)
+  // PRIVATE/GROUP: true for active members (left_at IS NULL).
+  // CHANNEL: aggregate posting authority — true only for Creator || (Admin && can_post_messages).
+  // Mirrors SendMessage guard / Telegram canPostMessages(); granular source is
+  // AdminRightsProto.can_post_messages (task-089).
+  bool can_send_messages = 9;
   reserved 10; // was is_pinned — client reads positions[0].is_pinned
   bool is_muted = 11; // notification suppression; from chat_members.is_muted
   reserved 12; // was is_archived — client reads positions[i].list_type
@@ -283,6 +287,9 @@ message ChatDetailProto {
   // NOTE for mobile: positions[0].order is always 0 in GetChatResponse — do NOT use it to update
   // ChatList sort-order cache (authoritative only from GetChatsResponse).
   repeated ChatPosition positions = 17;
+  // CHANNEL only: whether the author's name is shown under each post (signing).
+  // PRIVATE/GROUP: always false. Matches ChatUpdatedPayload.signing_enabled (task-089).
+  bool signing_enabled = 18;
 }
 
 message GetChatRequest {

@@ -89,7 +89,8 @@ message ChatUpdatedPayload {
   optional bool history_visible = 7;
   optional bool members_hidden = 8;
   optional GroupPermissionsPayload default_permissions = 9;
-  reserved 10 to 19;
+  optional bool signing_enabled = 10; // CHANNEL signing toggle (task-066/089)
+  reserved 11 to 19;
 }
 
 // Embedded within ChatUpdatedPayload when group default member permissions change.
