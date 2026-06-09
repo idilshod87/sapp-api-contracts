@@ -26,5 +26,6 @@ message MessageProto {
   string client_message_id = 9;
   int64 pts = 10;
   bool is_deleted = 11; // task-069: parity with server MessageProto.is_deleted
-  reserved 12 to 19;
+  optional string sender_display_name = 12; // task-088 (BD-03): server-resolved from user_profile_snapshots; absent = unknown (client falls back to cache/short-id)
+  reserved 13 to 19;
 }

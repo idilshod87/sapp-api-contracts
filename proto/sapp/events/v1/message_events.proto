@@ -23,7 +23,8 @@ message MessageNewPayload {
   optional bool unread_has_more = 7;
   optional sapp.messaging.v1.ReplyTo reply_to = 8; // NEW: present if message is a reply
   optional sapp.messaging.v1.ForwardFrom forward_from = 9; // NEW: present if message is forwarded
-  reserved 10 to 19;
+  optional string sender_display_name = 10; // task-088 (BD-03): group live-path only (filled by DeliveryGateway from the fan-out event); absent = unknown / direct chat
+  reserved 11 to 19;
 }
 
 // MessageEditedPayload — event_type = "message.edited".

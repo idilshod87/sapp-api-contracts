@@ -173,6 +173,9 @@ message GroupMessageDeliveryEvent {
   string text = 6; // may be empty for media-only messages
   // NF-02: media snapshot so WsGateway builds a complete message.new for group media messages.
   GroupMessageMediaSnapshot media = 7;
+  // task-088 (BD-03): sender display name resolved once per message by the fan-out producer
+  // (encode-once, ADR-0054); empty = unknown. DeliveryGateway copies it into MessageNewPayload.sender_display_name.
+  string sender_display_name = 8;
 }
 
 // Mirrors Sapp.Messaging.IntegrationEvents.MediaSnapshotDto (ADR-0049). Documentation only (NF-03).
