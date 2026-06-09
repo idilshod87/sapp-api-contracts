@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package sapp.events.v1;
+
+import "sapp/common/v1/common.proto"; // sapp.common.v1.Uuid (task-044 API-04)
+
+option csharp_namespace = "Sapp.Events.V1";
+option java_multiple_files = true;
+option java_outer_classname = "SessionEventsProto";
+option java_package = "com.sapp.events.v1";
+
+// Session Resumption frames (ADR-0052 / task-075).
+//
+// pts-anchored resume: the resume cursor is the existing per-user pts (task-044/045). All three
+// messages below carry pts values as a *snapshot* of the existing cursor, never as a freshly
+// allocated pts — hence connection.ready / connection.resumed register with RequiresPts=false in
+// WsEventRegistry (a RequiresPts=true event would force an allocation in the encoder).
+
+// ConnectionReadyPayload — server frame on a COLD connect (cold-path), event_type = "connection.ready".
+// Carries a fresh server-generated session_id and a snapshot of the user's current pts so the client
+// can detect a gap and run per-chat catch-up.
+message ConnectionReadyPayload {
+  sapp.common.v1.Uuid session_id = 1; // UUIDv7, generated server-side
+  int64 current_pts = 2; // snapshot of the current per-user pts (NOT allocated here); 0 if pts key absent
+  reserved 3 to 19;
+}
+
+// ConnectionResumedPayload — server frame on a successful fast-path resume,
+// event_type = "connection.resumed". up_to_pts is the pts up to which the buffer was replayed
+// (a snapshot, NOT allocated).
+message ConnectionResumedPayload {
+  int64 up_to_pts = 1;
+  reserved 2 to 19;
+}
+
+// ResumeRequestPayload — client resume request supplied as fields of the connection handshake
+// (NOT a server event-type). Optional: a cold connect omits it.
+message ResumeRequestPayload {
+  sapp.common.v1.Uuid session_id = 1;
+  int64 last_pts = 2;
+  reserved 3 to 19;
+}
