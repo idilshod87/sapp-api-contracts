@@ -117,6 +117,9 @@ message ChatListItemProto {
   repeated ChatPosition positions = 7; // Phase 1: 1 element
   bool is_muted = 8;
   string peer_user_id = 9; // task-069: PRIVATE only; empty for GROUP/CHANNEL
+  // task-091 / ADR-0057: cold-load watermark paired with unread_count (field 6). Upper message-id
+  // (inclusive) the server counted up to; client anchors delta-increment to it. Empty = no read state.
+  string last_counted_message_id = 10; // UUIDv7 string
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
@@ -196,6 +199,10 @@ message MarkReadResponse {
   int64 read_at_unix_ms = 3;
   bool updated = 4;
   int32 unread_count = 5; // exact count after MarkRead; 0 = all read
+  // task-091 / ADR-0057: watermark — upper message-id (inclusive) the server counted unread up to,
+  // captured atomically with the CountUnreadAsync scan (ADR-0057 §88). Lets channel-class clients
+  // delta-increment a message.new only when its id > watermark. Absent for legacy pre-watermark servers.
+  sapp.common.v1.Uuid last_counted_message_id = 6;
 }
 
 // ── GetChats ──────────────────────────────────────────────────────────────────
@@ -903,6 +910,8 @@ message ChatUnreadEntryProto {
   sapp.common.v1.Uuid chat_id = 1;
   int32 unread_count = 2;
   bool has_more_unread = 3;
+  // task-091 / ADR-0057: cold-load watermark paired with unread_count. Same capped scan as MarkRead.
+  sapp.common.v1.Uuid last_counted_message_id = 4;
 }
 
 // DeleteMessages — batch delete (server surface; supersedes singular DeleteMessage).
@@ -923,6 +932,8 @@ message GetChatUnreadResponse {
   sapp.common.v1.Uuid chat_id = 1;
   int32 unread_count = 2;
   bool has_more_unread = 3;
+  // task-091 / ADR-0057: cold-load watermark paired with unread_count. Same capped scan as MarkRead.
+  sapp.common.v1.Uuid last_counted_message_id = 4;
 }
 
 message GetTotalUnreadRequest {}

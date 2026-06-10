@@ -19,7 +19,11 @@ message MessageNewPayload {
   sapp.common.v1.Uuid sender_id = 3;
   int64 sent_at_unix_ms = 4;
   sapp.messaging.v1.MessageContent content = 5; // typed oneof (task-067); was empty in Phase 1
-  optional int64 unread_count = 6; // absent = unknown
+  // PRIVATE (Direct) only: server-authoritative count for the single recipient (task-055).
+  // task-091 / ADR-0057 §A.1.b: for channel-class (GROUP/CHANNEL) this is ALWAYS absent —
+  // an encode-once broadcast frame (ADR-0054) cannot carry a per-recipient value. Channel-class
+  // clients MUST ignore this field entirely and track unread via baseline + last_counted_message_id.
+  optional int64 unread_count = 6; // absent = unknown / channel-class
   optional bool unread_has_more = 7;
   optional sapp.messaging.v1.ReplyTo reply_to = 8; // NEW: present if message is a reply
   optional sapp.messaging.v1.ForwardFrom forward_from = 9; // NEW: present if message is forwarded
