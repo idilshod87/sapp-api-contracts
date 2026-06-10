@@ -50,8 +50,9 @@ message ChatReadPayload {
   // task-091 / ADR-0057: watermark — upper message-id (inclusive) the server counted unread up to,
   // captured atomically with the CountUnreadAsync scan. Invariant: a message.new with id >
   // last_counted_message_id is NOT yet reflected in unread_count, so the client delta-increments it;
-  // id <= watermark is already in the baseline (idempotency guard). Empty = no read state yet.
-  string last_counted_message_id = 4; // UUIDv7 string
+  // id <= watermark is already in the baseline (idempotency guard). Unset = no read state yet.
+  // task-091 follow-up: type unified string→Uuid (matches MarkReadResponse/GetChatUnread; pre-launch break).
+  sapp.common.v1.Uuid last_counted_message_id = 4;
 }
 
 // task-055 / ADR-0044: event_type = "chat.mention_read" — delivered to the user's own ws:user:{userId} channel.

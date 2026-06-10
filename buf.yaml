@@ -21,6 +21,18 @@ lint:
 breaking:
   use:
     - FILE
+  # TEMPORARY (task-091 follow-up): last_counted_message_id type unified string→Uuid in ChatReadPayload
+  # + ChatListItemProto to match MarkReadResponse / GetChatUnreadResponse / ChatUnreadEntryProto. The
+  # field was added in v1.4.0 with NO installed consumers (mobile-and-34 not yet implemented), so this is
+  # a sanctioned pre-launch break. REMOVE this ignore once the Uuid release merges to main (main becomes
+  # the new strict baseline) — mirrors the task-069 A.6 temporary-ignore pattern below.
+  ignore_only:
+    FIELD_SAME_TYPE:
+      - proto/sapp/events/v1/chat_events.proto
+      - proto/sapp/messaging/v1/messaging_service.proto
+    FIELD_SAME_CARDINALITY:
+      - proto/sapp/events/v1/chat_events.proto
+      - proto/sapp/messaging/v1/messaging_service.proto
   # task-069 A.6 follow-up COMPLETE: the v1.0.12 parity release (MarkReadResponse reshape,
   # string→Uuid promotions, java_package grpc-infix removal, Profile .Grpc→.V1, explicit namespace
   # options) is merged to main, so main is now the baseline. The temporary breaking.ignore is removed

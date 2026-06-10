@@ -118,8 +118,9 @@ message ChatListItemProto {
   bool is_muted = 8;
   string peer_user_id = 9; // task-069: PRIVATE only; empty for GROUP/CHANNEL
   // task-091 / ADR-0057: cold-load watermark paired with unread_count (field 6). Upper message-id
-  // (inclusive) the server counted up to; client anchors delta-increment to it. Empty = no read state.
-  string last_counted_message_id = 10; // UUIDv7 string
+  // (inclusive) the server counted up to; client anchors delta-increment to it. Unset = no read state.
+  // task-091 follow-up: type unified string→Uuid (matches MarkReadResponse/GetChatUnread; pre-launch break).
+  sapp.common.v1.Uuid last_counted_message_id = 10;
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
