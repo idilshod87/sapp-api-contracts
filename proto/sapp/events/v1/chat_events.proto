@@ -96,7 +96,8 @@ message ChatUpdatedPayload {
   optional bool members_hidden = 8;
   optional GroupPermissionsPayload default_permissions = 9;
   optional bool signing_enabled = 10; // CHANNEL signing toggle (task-066/089)
-  reserved 11 to 19;
+  optional bool join_by_request_enabled = 11; // CHANNEL join-by-request toggle (task-066; mobile-and-29). Telegram-parity: sibling of signing_enabled (channel.signatures/join_request flags) — delivered atomically.
+  reserved 12 to 19;
 }
 
 // Embedded within ChatUpdatedPayload when group default member permissions change.
