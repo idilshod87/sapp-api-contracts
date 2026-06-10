@@ -110,7 +110,9 @@ message MessagePreviewProto {
 message ChatListItemProto {
   string chat_id = 1;
   ChatType chat_type = 2;
-  string title = 3; // for PRIVATE = peer display_name (server-computed)
+  // task-090 / ADR-0056: PRIVATE = raw peer display_name (may be empty — NO "Unknown"/silent fallback;
+  // client builds the name chain from the peer_* fields below). GROUP/CHANNEL = chat title.
+  string title = 3;
   string avatar_url = 4; // CDN URL; empty string if no avatar
   MessagePreviewProto last_message = 5; // absent for new chat with no messages
   int32 unread_count = 6;
@@ -121,6 +123,11 @@ message ChatListItemProto {
   // (inclusive) the server counted up to; client anchors delta-increment to it. Unset = no read state.
   // task-091 follow-up: type unified string→Uuid (matches MarkReadResponse/GetChatUnread; pre-launch break).
   sapp.common.v1.Uuid last_counted_message_id = 10;
+  // task-090 / ADR-0056: structured peer fields for the direct-chat name fallback (PRIVATE only).
+  // Client renders the chain: title(display_name) → FormatPhone(peer_phone_e164) → localized
+  // "Deleted Account" (when is_peer_deleted). Formatting/localization are client-side.
+  string peer_phone_e164 = 11; // E.164; empty if peer has no number / not a direct chat
+  bool is_peer_deleted = 12; // peer left or deleted account (tombstone); independent of phone presence
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
@@ -273,7 +280,9 @@ message CreateDirectChatResponse {
 message ChatDetailProto {
   string chat_id = 1;
   ChatType chat_type = 2;
-  string title = 3; // PRIVATE: peer display_name; fallback "Unknown"
+  // task-090 / ADR-0056: PRIVATE = raw peer display_name (may be empty — NO "Unknown"; client builds
+  // the name chain from the peer_* fields below). GROUP/CHANNEL = chat title.
+  string title = 3;
   string avatar_url = 4; // CDN URL; empty for GROUP/CHANNEL Phase 1
   string description = 5; // empty for Phase 1 (no DB column yet)
   int32 member_count = 6; // GROUP/CHANNEL only; 0 for DM
@@ -298,6 +307,11 @@ message ChatDetailProto {
   // CHANNEL only: whether the author's name is shown under each post (signing).
   // PRIVATE/GROUP: always false. Matches ChatUpdatedPayload.signing_enabled (task-089).
   bool signing_enabled = 18;
+  // task-090 / ADR-0056: structured peer fields for the direct-chat name fallback (PRIVATE only).
+  // Client renders the chain: title(display_name) → FormatPhone(peer_phone_e164) → localized
+  // "Deleted Account" (when is_peer_deleted). Formatting/localization are client-side.
+  string peer_phone_e164 = 19; // E.164; empty if peer has no number / not a direct chat
+  bool is_peer_deleted = 20; // peer left or deleted account (tombstone); independent of phone presence
 }
 
 message GetChatRequest {
