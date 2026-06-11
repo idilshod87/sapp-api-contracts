@@ -33,10 +33,21 @@ jobs:
       - name: Bump version and push tag
         id: tag
         run: |
-          LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          set -euo pipefail
+          # Highest semver tag across the whole repo. NOT `git describe --tags`, which returns the
+          # nearest tag *reachable from HEAD* — when a prior tag wasn't an ancestor of HEAD it returned
+          # a stale latest, causing the next version to collide with an already-published one (the tag
+          # got moved + the same NuGet version was re-published with new content — immutability break).
+          LATEST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)
+          LATEST=${LATEST:-v0.0.0}
           VERSION=${LATEST#v}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          COMMITS=$(git log "${LATEST}..HEAD" --pretty=format:"%s")
+          # Range from the latest real tag; on the first-ever run (no tags) scan full history.
+          if git rev-parse -q --verify "refs/tags/${LATEST}" >/dev/null; then
+            COMMITS=$(git log "${LATEST}..HEAD" --pretty=format:"%s")
+          else
+            COMMITS=$(git log HEAD --pretty=format:"%s")
+          fi
           if echo "$COMMITS" | grep -qE "(^(feat|fix|refactor|build|ci|chore|docs|style|test|perf)!)|BREAKING CHANGE"; then
             MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0
           elif echo "$COMMITS" | grep -qE "^feat(\(.+\))?:"; then
@@ -45,6 +56,12 @@ jobs:
             PATCH=$((PATCH+1))
           fi
           NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          # Immutability guard: never move or overwrite an existing tag/version.
+          if git rev-parse -q --verify "refs/tags/${NEW_TAG}" >/dev/null; then
+            echo "::error::Computed tag ${NEW_TAG} already exists — refusing to overwrite (version immutability). Latest seen: ${LATEST}."
+            exit 1
+          fi
+          echo "Latest=${LATEST} → New=${NEW_TAG}"
           git tag "$NEW_TAG"
           git push origin "$NEW_TAG"
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
