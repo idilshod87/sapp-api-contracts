@@ -317,6 +317,11 @@ message ChatDetailProto {
   // "Deleted Account" (when is_peer_deleted). Formatting/localization are client-side.
   string peer_phone_e164 = 19; // E.164; empty if peer has no number / not a direct chat
   bool is_peer_deleted = 20; // peer left or deleted account (tombstone); independent of phone presence
+  // task-094: the requesting user's membership role for this chat (role-gated info-screen UI).
+  // PRIVATE = role in the DM (typically MEMBER); GROUP/CHANNEL = the caller's membership role.
+  // GetChat already 404s non-members, so this is only populated for active members; UNSPECIFIED (0)
+  // is the wire default ("not populated"), not a non-member sentinel. Restricted/Banned pass through.
+  MemberRoleProto my_role = 21;
 }
 
 message GetChatRequest {
