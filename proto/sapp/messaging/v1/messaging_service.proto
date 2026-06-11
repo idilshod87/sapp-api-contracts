@@ -128,6 +128,11 @@ message ChatListItemProto {
   // "Deleted Account" (when is_peer_deleted). Formatting/localization are client-side.
   string peer_phone_e164 = 11; // E.164; empty if peer has no number / not a direct chat
   bool is_peer_deleted = 12; // peer left or deleted account (tombstone); independent of phone presence
+  // task-095 / ADR-0044 (RD-02): authoritative unread @mention count for this chat (mirror of Telegram
+  // dialog.unread_mentions_count). Lets the client reconcile the @mention badge on every dialog-sync,
+  // making best-effort chat.mention_read delivery safe. EXACT value (chat_members.unread_mentions_count
+  // column) — NOT a capped scan, so it needs no watermark pairing (unlike unread_count + field 10).
+  int32 unread_mentions_count = 13;
 }
 
 // ── SendMessage ───────────────────────────────────────────────────────────────
