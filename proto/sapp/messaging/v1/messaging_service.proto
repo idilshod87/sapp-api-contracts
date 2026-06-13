@@ -538,6 +538,10 @@ message CreateGroupRequest {
   repeated string user_ids = 2;
   string description = 3;
   bool is_public = 4;
+  // ADR-0059 v1.4 / task-097 — per-message request-idempotency token (UUIDv7). A repeated CreateGroup
+  // with the same (caller, idempotency_key) returns the original group (dedup). Optional in Phase 1
+  // (empty = warn-only adoption telemetry); made required in task-099.
+  string idempotency_key = 5;
 }
 message CreateGroupResponse {
   string chat_id = 1;
