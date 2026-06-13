@@ -322,6 +322,12 @@ message ChatDetailProto {
   // GetChat already 404s non-members, so this is only populated for active members; UNSPECIFIED (0)
   // is the wire default ("not populated"), not a non-member sentinel. Restricted/Banned pass through.
   MemberRoleProto my_role = 21;
+  // task-096 / ADR-0058 (Вариант B): server message id of the active pinned message ("" if none),
+  // so the chat-open cold-load seeds the pinned banner without a separate GetPinnedMessage RPC.
+  // Type-agnostic — populated for PRIVATE/GROUP/CHANNEL from chat_pin (PK=chat_id). Client seeding:
+  // mobile-and-42 (PRIVATE) / Phase-2 (group/channel). String (not Uuid) — consistent with the other
+  // message-id fields here (last_read_inbox_message_id, draft_reply_to_message_id).
+  string pinned_message_id = 22;
 }
 
 message GetChatRequest {
