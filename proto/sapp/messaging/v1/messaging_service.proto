@@ -1095,6 +1095,11 @@ message ForwardMessagesRequest {
   repeated sapp.common.v1.Uuid message_ids = 3; // 1..50; order preserved
   bool silent = 4;
   bool no_sender = 5;
+  // ADR-0059 v1.5 / task-098 — per-message request-idempotency token (UUIDv7). A repeated forward with
+  // the same (caller, idempotency_key) replays the original batch result (N ids + per-item failures) and
+  // delivers nothing twice (topology B commit-gate). Optional pre-adoption (empty = legacy inline path +
+  // warn-only telemetry); made required in task-099.
+  string idempotency_key = 6;
 }
 message ForwardMessagesResponse {
   repeated sapp.common.v1.Uuid forwarded_message_ids = 1; // order preserved
@@ -1107,6 +1112,10 @@ message CopyMessageRequest {
   sapp.common.v1.Uuid from_chat_id = 1;
   sapp.common.v1.Uuid to_chat_id = 2;
   sapp.common.v1.Uuid message_id = 3;
+  // ADR-0059 v1.5 / task-098 — per-message request-idempotency token (UUIDv7). A repeated copy with the
+  // same (caller, idempotency_key) returns the original copied message (dedup, topology B commit-gate).
+  // Optional pre-adoption (empty = legacy inline path + warn-only telemetry); made required in task-099.
+  string idempotency_key = 4;
 }
 message CopyMessageResponse {
   sapp.common.v1.Uuid copied_message_id = 1;
