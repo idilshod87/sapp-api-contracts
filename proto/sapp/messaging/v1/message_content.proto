@@ -102,5 +102,9 @@ message ForwardFrom {
   sapp.common.v1.Uuid original_chat_id = 2;
   optional sapp.common.v1.Uuid original_sender_id = 3;
   int64 forwarded_at_unix_ms = 4;
-  reserved 5 to 9;
+  // task-112 (FWD-02 / Telegram messageFwdHeader.from_name): snapshot of the original sender's
+  // display name taken at forward time. Absent (unset) = name unavailable (anonymous forward, missing
+  // or empty profile snapshot) → client falls back to short-id. Never the raw id as a name.
+  optional string original_sender_name = 5;
+  reserved 6 to 9;
 }
