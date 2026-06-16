@@ -328,6 +328,11 @@ message ChatDetailProto {
   // mobile-and-42 (PRIVATE) / Phase-2 (group/channel). String (not Uuid) — consistent with the other
   // message-id fields here (last_read_inbox_message_id, draft_reply_to_message_id).
   string pinned_message_id = 22;
+  // task-105: CHANNEL-only — whether subscribing requires an admin-approved join request
+  // (sibling of signing_enabled; mirrors Telegram's requestToJoin flag on ChannelData). Cold-load
+  // source for the ChannelSettingsScreen join-by-request toggle's initial state; live updates come
+  // from ChatUpdatedPayload.join_by_request_enabled (task-093). PRIVATE/GROUP: always false.
+  bool join_by_request_enabled = 23;
 }
 
 message GetChatRequest {
