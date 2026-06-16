@@ -21,14 +21,10 @@ lint:
 breaking:
   use:
     - FILE
-  ignore:
-    # task-118 (ADR-0064 §C′ / ADR-0050): TEMPORARY for this PR. GroupMessageDeliveryEvent +
-    # GroupMessageMediaSnapshot were deleted from this file — they were documentation-only (NF-03)
-    # mirrors of a server-internal Messaging→DeliveryGateway contract whose authoritative definition is
-    # the code-first C# record (ADR-0050). No installed consumers (mobile/backend never used the
-    # generated Sapp.Events.V1 type); pre-prod, pre-launch break. Pattern (task-069/091): ignore for
-    # THIS PR → merge → main becomes the new baseline → REMOVE this entry so the gate is strict again.
-    - proto/sapp/events/v1/chat_events.proto
+  # task-118 follow-up COMPLETE: the GroupMessageDeliveryEvent + GroupMessageMediaSnapshot deletion
+  # (ADR-0064 §C′ / ADR-0050 — internal code-first contract, removed from the public package) is merged
+  # to main, so main is the new baseline and the temporary breaking.ignore is removed — the gate is
+  # strict again: future PRs are compared against the contract with those messages already absent.
   # task-091 follow-up COMPLETE: the v1.4.1 release unified last_counted_message_id string→Uuid in
   # ChatReadPayload + ChatListItemProto (pre-launch break, no installed consumers). Merged to main, so
   # main is the new baseline and the temporary breaking.ignore_only is removed — the gate is strict again.
